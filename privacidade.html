@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy / Política de Privacidade / Informativa sulla Privacy — Growth</title>
+<meta name="theme-color" content="#090B12">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#090B12; --ink-2:#12151F; --parchment:#F2F5FA;
+    --line:rgba(180,200,255,0.14);
+    --gold:#C9962F; --gold-soft:#E8C77E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(201,150,47,0.06), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(185,140,255,0.06), transparent 45%),
+      var(--ink);
+    color:var(--parchment);
+    font-family:'Inter',sans-serif; min-height:100vh; line-height:1.65;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:40px 20px 80px;}
+  .topRow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+  .back{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12.5px;
+    color:rgba(242,245,250,0.6);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  .back:hover{border-color:var(--gold-soft);color:var(--gold-soft);}
+  .langSwitch{display:flex;gap:6px;background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:999px;padding:4px;}
+  .langBtn{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;
+    background:none;border:none;color:rgba(242,245,250,0.55);padding:6px 12px;border-radius:999px;cursor:pointer;
+    transition:background .2s ease, color .2s ease;
+  }
+  .langBtn.active{background:linear-gradient(145deg, var(--gold-soft), var(--gold));color:var(--ink);font-weight:700;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold-soft);}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:6px 0 4px;}
+  .updated{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(242,245,250,0.4);margin-bottom:32px;}
+  h2{
+    font-family:'JetBrains Mono',monospace;text-transform:uppercase;font-size:13px;
+    letter-spacing:0.08em;color:var(--gold-soft);margin:36px 0 12px;
+  }
+  p, li{font-size:15px;color:rgba(242,245,250,0.85);}
+  ul{padding-left:20px;}
+  li{margin-bottom:6px;}
+  a{color:var(--gold-soft);}
+  .card{
+    background:rgba(18,21,31,0.7);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;margin-bottom:8px;
+  }
+  footer{margin-top:48px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(242,245,250,0.3);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topRow">
+    <a class="back" href="index.html" id="backLink">← voltar ao app</a>
+    <div class="langSwitch" id="langSwitch">
+      <button type="button" class="langBtn" data-lang="it">IT</button>
+      <button type="button" class="langBtn" data-lang="pt">PT</button>
+      <button type="button" class="langBtn" data-lang="en">EN</button>
+    </div>
+  </div>
+
+  <span class="eyebrow">Growth</span>
+  <h1 id="title">Política de Privacidade</h1>
+  <div class="updated" id="updated">Última atualização: 20 de agosto de 2026</div>
+
+  <div class="card"><p id="intro"></p></div>
+
+  <h2 id="h-collect"></h2>
+  <ul id="l-collect"></ul>
+
+  <h2 id="h-storage"></h2>
+  <p id="p-storage"></p>
+
+  <h2 id="h-share"></h2>
+  <p id="p-share"></p>
+  <ul id="l-share"></ul>
+
+  <h2 id="h-local"></h2>
+  <p id="p-local"></p>
+
+  <h2 id="h-rights"></h2>
+  <ul id="l-rights"></ul>
+
+  <h2 id="h-minors"></h2>
+  <p id="p-minors"></p>
+
+  <h2 id="h-changes"></h2>
+  <p id="p-changes"></p>
+
+  <h2 id="h-contact"></h2>
+  <p id="p-contact"></p>
+
+  <footer id="footerText">Growth — planejador de metas semanal</footer>
+</div>
+
+<script>
+const I18N = {
+  pt: {
+    htmlLang:'pt-BR',
+    back:'← voltar ao app',
+    title:'Política de Privacidade',
+    updated:'Última atualização: 20 de agosto de 2026',
+    intro:'Esta política explica, de forma simples, quais dados o app <strong>Growth</strong> coleta, para que servem e como você pode controlá-los.',
+    hCollect:'Quais dados coletamos',
+    lCollect:[
+      '<strong>E-mail</strong>, usado para você entrar na sua conta (via e-mail/senha ou login com Google).',
+      '<strong>Apelido</strong>, usado apenas para te cumprimentar dentro do app (ex.: "Bom dia, Ricardo").',
+      '<strong>As metas que você registra</strong>: texto, área da vida (esposa, filhos, espiritual, trabalho, lazer, servir), período (diário, semanal, mensal), prioridade e status de conclusão.',
+      'Não coletamos localização, contatos, fotos ou qualquer dado que você não digite diretamente no app.'
+    ],
+    hStorage:'Onde os dados ficam guardados',
+    pStorage:'Seus dados ficam no <strong>Firebase</strong> (infraestrutura do Google Cloud), num banco de dados (Firestore) protegido por regras que garantem que <strong>somente você</strong> pode ler ou alterar as suas próprias metas — nem outros usuários, nem nós, temos acesso normal aos seus dados.',
+    hShare:'Com quem compartilhamos',
+    pShare:'Não vendemos, alugamos nem compartilhamos seus dados com terceiros para fins de marketing. Os únicos "terceiros" envolvidos são os provedores que tornam o app possível:',
+    lShare:[
+      '<strong>Firebase / Google Cloud</strong> — hospedagem dos dados e do login.',
+      '<strong>Google Sign-In</strong> — apenas se você optar por entrar com sua conta Google.'
+    ],
+    hLocal:'Cookies e armazenamento local',
+    pLocal:'O app usa o armazenamento local do seu navegador (localStorage) apenas para lembrar preferências como o idioma escolhido nesta página e se você já dispensou o aviso de instalação — nada disso é enviado para fora do seu aparelho.',
+    hRights:'Seus direitos',
+    lRights:[
+      '<strong>Acessar</strong> seus dados: tudo que você registrou aparece no próprio app.',
+      '<strong>Corrigir ou apagar</strong> uma meta: pode ser feito a qualquer momento direto no app (botão "×").',
+      '<strong>Apagar a conta inteira</strong>: envie um e-mail para o endereço abaixo pedindo a exclusão — seus dados serão removidos do banco de dados.'
+    ],
+    hMinors:'Menores de idade',
+    pMinors:'O app não é direcionado a menores de 13 anos e não coleta intencionalmente dados de crianças.',
+    hChanges:'Mudanças nesta política',
+    pChanges:'Se esta política mudar, a data no topo desta página será atualizada.',
+    hContact:'Contato',
+    pContact:'Dúvidas ou pedidos de exclusão de dados: <a href="mailto:ricardobatistainfo@gmail.com">ricardobatistainfo@gmail.com</a>',
+    footer:'Growth — planejador de metas semanal'
+  },
+  en: {
+    htmlLang:'en',
+    back:'← back to app',
+    title:'Privacy Policy',
+    updated:'Last updated: August 20, 2026',
+    intro:'This policy explains, in plain terms, what data the <strong>Growth</strong> app collects, what it is used for, and how you can control it.',
+    hCollect:'What data we collect',
+    lCollect:[
+      '<strong>Email</strong>, used to sign in to your account (via email/password or Google sign-in).',
+      '<strong>Nickname</strong>, used only to greet you inside the app (e.g. "Good morning, Ricardo").',
+      '<strong>The goals you create</strong>: text, life area (spouse, children, spiritual, work, leisure, serving), period (daily, weekly, monthly), priority and completion status.',
+      'We do not collect location, contacts, photos, or any data you don\'t type directly into the app.'
+    ],
+    hStorage:'Where your data is stored',
+    pStorage:'Your data is stored on <strong>Firebase</strong> (Google Cloud infrastructure), in a database (Firestore) protected by rules that ensure <strong>only you</strong> can read or change your own goals — no other user, and not us either, has normal access to your data.',
+    hShare:'Who we share it with',
+    pShare:'We do not sell, rent, or share your data with third parties for marketing purposes. The only "third parties" involved are the providers that make the app possible:',
+    lShare:[
+      '<strong>Firebase / Google Cloud</strong> — data and login hosting.',
+      '<strong>Google Sign-In</strong> — only if you choose to sign in with your Google account.'
+    ],
+    hLocal:'Cookies and local storage',
+    pLocal:'The app uses your browser\'s local storage (localStorage) only to remember preferences like the language chosen on this page and whether you already dismissed the install banner — none of this is sent outside your device.',
+    hRights:'Your rights',
+    lRights:[
+      '<strong>Access</strong> your data: everything you\'ve entered appears in the app itself.',
+      '<strong>Correct or delete</strong> a goal: can be done at any time directly in the app (the "×" button).',
+      '<strong>Delete your entire account</strong>: send an email to the address below requesting deletion — your data will be removed from the database.'
+    ],
+    hMinors:'Minors',
+    pMinors:'The app is not directed at children under 13 and does not knowingly collect data from children.',
+    hChanges:'Changes to this policy',
+    pChanges:'If this policy changes, the date at the top of this page will be updated.',
+    hContact:'Contact',
+    pContact:'Questions or data deletion requests: <a href="mailto:ricardobatistainfo@gmail.com">ricardobatistainfo@gmail.com</a>',
+    footer:'Growth — weekly goal planner'
+  },
+  it: {
+    htmlLang:'it',
+    back:'← torna all\'app',
+    title:'Informativa sulla Privacy',
+    updated:'Ultimo aggiornamento: 20 agosto 2026',
+    intro:'Questa informativa spiega, in modo semplice, quali dati raccoglie l\'app <strong>Growth</strong>, a cosa servono e come puoi controllarli.',
+    hCollect:'Quali dati raccogliamo',
+    lCollect:[
+      '<strong>Email</strong>, usata per accedere al tuo account (via email/password o accesso con Google).',
+      '<strong>Soprannome</strong>, usato solo per salutarti all\'interno dell\'app (es. "Buongiorno, Ricardo").',
+      '<strong>Gli obiettivi che crei</strong>: testo, area di vita (coniuge, figli, spirituale, lavoro, tempo libero, servizio), periodo (giornaliero, settimanale, mensile), priorità e stato di completamento.',
+      'Non raccogliamo posizione, contatti, foto o qualsiasi dato che tu non digiti direttamente nell\'app.'
+    ],
+    hStorage:'Dove vengono conservati i dati',
+    pStorage:'I tuoi dati sono conservati su <strong>Firebase</strong> (infrastruttura Google Cloud), in un database (Firestore) protetto da regole che garantiscono che <strong>solo tu</strong> possa leggere o modificare i tuoi obiettivi — né altri utenti né noi abbiamo accesso normale ai tuoi dati.',
+    hShare:'Con chi condividiamo',
+    pShare:'Non vendiamo, affittiamo né condividiamo i tuoi dati con terze parti per scopi di marketing. Le uniche "terze parti" coinvolte sono i fornitori che rendono possibile l\'app:',
+    lShare:[
+      '<strong>Firebase / Google Cloud</strong> — hosting dei dati e dell\'accesso.',
+      '<strong>Google Sign-In</strong> — solo se scegli di accedere con il tuo account Google.'
+    ],
+    hLocal:'Cookie e archiviazione locale',
+    pLocal:'L\'app usa l\'archiviazione locale del tuo browser (localStorage) solo per ricordare preferenze come la lingua scelta in questa pagina e se hai già chiuso l\'avviso di installazione — nulla di questo viene inviato fuori dal tuo dispositivo.',
+    hRights:'I tuoi diritti',
+    lRights:[
+      '<strong>Accedere</strong> ai tuoi dati: tutto ciò che hai inserito appare nell\'app stessa.',
+      '<strong>Correggere o eliminare</strong> un obiettivo: puoi farlo in qualsiasi momento direttamente nell\'app (pulsante "×").',
+      '<strong>Eliminare l\'intero account</strong>: invia un\'email all\'indirizzo sotto richiedendo la cancellazione — i tuoi dati saranno rimossi dal database.'
+    ],
+    hMinors:'Minori',
+    pMinors:'L\'app non è rivolta a minori di 13 anni e non raccoglie intenzionalmente dati di bambini.',
+    hChanges:'Modifiche a questa informativa',
+    pChanges:'Se questa informativa cambia, la data in cima a questa pagina sarà aggiornata.',
+    hContact:'Contatti',
+    pContact:'Domande o richieste di cancellazione dati: <a href="mailto:ricardobatistainfo@gmail.com">ricardobatistainfo@gmail.com</a>',
+    footer:'Growth — pianificatore di obiettivi settimanale'
+  }
+};
+
+function applyLang(lang){
+  const t = I18N[lang];
+  document.documentElement.lang = t.htmlLang;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('title').textContent = t.title;
+  document.getElementById('updated').textContent = t.updated;
+  document.getElementById('intro').innerHTML = t.intro;
+  document.getElementById('h-collect').textContent = t.hCollect;
+  document.getElementById('l-collect').innerHTML = t.lCollect.map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('h-storage').textContent = t.hStorage;
+  document.getElementById('p-storage').innerHTML = t.pStorage;
+  document.getElementById('h-share').textContent = t.hShare;
+  document.getElementById('p-share').textContent = t.pShare;
+  document.getElementById('l-share').innerHTML = t.lShare.map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('h-local').textContent = t.hLocal;
+  document.getElementById('p-local').textContent = t.pLocal;
+  document.getElementById('h-rights').textContent = t.hRights;
+  document.getElementById('l-rights').innerHTML = t.lRights.map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('h-minors').textContent = t.hMinors;
+  document.getElementById('p-minors').textContent = t.pMinors;
+  document.getElementById('h-changes').textContent = t.hChanges;
+  document.getElementById('p-changes').textContent = t.pChanges;
+  document.getElementById('h-contact').textContent = t.hContact;
+  document.getElementById('p-contact').innerHTML = t.pContact;
+  document.getElementById('footerText').textContent = t.footer;
+  document.querySelectorAll('.langBtn').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
+  try{ localStorage.setItem('growth_privacy_lang', lang); }catch(e){}
+}
+
+document.querySelectorAll('.langBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=> applyLang(btn.dataset.lang));
+});
+
+let initialLang = 'pt';
+try{
+  const saved = localStorage.getItem('growth_privacy_lang');
+  if(saved && I18N[saved]) initialLang = saved;
+  else{
+    const nav = (navigator.language || 'pt').toLowerCase();
+    if(nav.startsWith('en')) initialLang = 'en';
+    else if(nav.startsWith('it')) initialLang = 'it';
+  }
+}catch(e){}
+applyLang(initialLang);
+</script>
+</body>
+</html>
