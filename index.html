@@ -2737,6 +2737,14 @@ ajustarAlturaJanela();
 window.addEventListener('resize', ajustarAlturaJanela);
 window.addEventListener('orientationchange', ajustarAlturaJanela);
 window.addEventListener('pageshow', ajustarAlturaJanela);
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', ajustarAlturaJanela);
+}
+// no lancamento em app instalado no iOS, a altura real so assenta depois
+// do primeiro layout — remedir logo em seguida evita o menu nascer
+// deslocado ate a pessoa trocar de aba
+requestAnimationFrame(()=> requestAnimationFrame(ajustarAlturaJanela));
+[80, 250, 600].forEach(ms=> setTimeout(ajustarAlturaJanela, ms));
 
 /* ---------- bloqueia zoom por gesto (iOS Safari ignora user-scalable=no) ---------- */
 ['gesturestart','gesturechange','gestureend'].forEach(evt=>{
