@@ -853,7 +853,7 @@
      em standalone o conteudo passa a terminar por baixo do menu */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
-    --nav-space: calc(78px + max(14px, env(safe-area-inset-bottom)));
+    --nav-space: calc(75px + env(safe-area-inset-bottom));
   }
   .wrap{padding-bottom:var(--nav-space) !important;}
 
@@ -1006,7 +1006,7 @@
   /* ---- tela de login / criar conta ---- */
   .auth-wrap{
     min-height:100vh;
-    min-height:100dvh;
+    min-height:var(--app-vh, 100dvh);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -1171,18 +1171,21 @@
     flex-shrink:0;
   }
 
+  /* barra colada no rodape: o fundo se estende ate a borda da tela e o
+     padding inferior respeita o indicador de home, sem deixar vao */
   .bottom-nav.nav5{
-    left:14px; right:14px;
-    max-width:480px;
-    margin:0 auto;
+    left:0; right:0; bottom:0;
+    max-width:none;
+    margin:0;
     transform:none;
     justify-content:space-between;
     gap:0;
-    background:rgba(9,11,18,0.82);
-    border:1px solid rgba(180,200,255,0.14);
-    border-radius:18px;
-    padding:10px 4px;
-    box-shadow:0 12px 34px -14px rgba(0,0,0,0.75), inset 0 0 0 1px rgba(180,200,255,0.03);
+    background:rgba(9,11,18,0.94);
+    border:none;
+    border-top:1px solid rgba(180,200,255,0.12);
+    border-radius:0;
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 30px -16px rgba(0,0,0,0.85);
   }
   .bottom-nav.nav5 button{
     flex:1;
@@ -1271,7 +1274,7 @@
     /* altura util = viewport - padding do topo do wrap - espaco do menu.
        dvh (e nao vh) para descontar as barras do navegador no celular */
     min-height:calc(100vh - 28px - 92px);
-    min-height:calc(100dvh - var(--safe-top) - var(--nav-space));
+    min-height:calc(var(--app-vh, 100dvh) - var(--safe-top) - var(--nav-space));
   }
   #screen-hoje .progress-hero{
     padding:18px 20px 16px;
@@ -2722,6 +2725,18 @@ function wireBottomNav(){
     });
   });
 }
+
+/* ---------- altura real da janela ----------
+   em app instalado o iOS as vezes calcula 100dvh antes das areas seguras
+   assentarem, e a tela so fica certa depois de interagir. medindo por JS
+   o layout ja nasce correto. */
+function ajustarAlturaJanela(){
+  document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px');
+}
+ajustarAlturaJanela();
+window.addEventListener('resize', ajustarAlturaJanela);
+window.addEventListener('orientationchange', ajustarAlturaJanela);
+window.addEventListener('pageshow', ajustarAlturaJanela);
 
 /* ---------- bloqueia zoom por gesto (iOS Safari ignora user-scalable=no) ---------- */
 ['gesturestart','gesturechange','gestureend'].forEach(evt=>{
