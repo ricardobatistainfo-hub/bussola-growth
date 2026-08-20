@@ -841,7 +841,11 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  .wrap{padding-bottom:max(96px, calc(80px + env(safe-area-inset-bottom))) !important;}
+  /* espaco reservado para o menu fixo: altura do menu + o quanto ele
+     sobe do rodape. usado tambem no calculo de altura da tela Hoje,
+     para o conteudo nunca terminar por baixo do menu */
+  :root{ --nav-space: calc(92px + env(safe-area-inset-bottom)); }
+  .wrap{padding-bottom:var(--nav-space) !important;}
 
   /* ---- navegacao por 5 telas (estilo app nativo) ---- */
   .app-screen{display:none;}
@@ -1254,10 +1258,10 @@
   #screen-hoje.active{
     display:flex;
     flex-direction:column;
-    min-height:calc(100vh - 130px);
-    /* dvh desconta as barras do navegador no celular; sem isso a grade
-       estica alem da area visivel e fica por baixo do menu inferior */
-    min-height:calc(100dvh - 130px);
+    /* altura util = viewport - padding do topo do wrap - espaco do menu.
+       dvh (e nao vh) para descontar as barras do navegador no celular */
+    min-height:calc(100vh - 28px - 92px);
+    min-height:calc(100dvh - 28px - var(--nav-space));
   }
   #screen-hoje .progress-hero{
     padding:18px 20px 16px;
@@ -1265,6 +1269,18 @@
     flex-shrink:0;
   }
   #screen-hoje .progress-hero-top{margin-bottom:0;}
+
+  /* telas baixas (celular): compacta o cabecalho para a tela Hoje caber
+     inteira, sem o conteudo terminar por baixo do menu fixo */
+  @media (max-height: 820px){
+    #screen-hoje .progress-hero{padding:12px 16px 12px;}
+    #screen-hoje .pie-wrap{width:108px;height:108px;margin:8px auto 2px;}
+    #screen-hoje .pie-center-pct{font-size:23px;}
+    #screen-hoje .progress-hero-meta{margin-top:6px;}
+    #screen-hoje .pie-tabs{margin-top:10px;}
+    #screen-hoje .greeting-block-compact{margin-bottom:8px;}
+    #screen-hoje .mini-cat-grid{margin-top:10px;}
+  }
 
   .pie-wrap{
     width:132px;height:132px;
