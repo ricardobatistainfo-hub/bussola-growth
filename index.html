@@ -1621,7 +1621,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail,
+  signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail,
   updateEmail, updatePassword
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -2523,12 +2523,24 @@ document.getElementById('authSubmitBtn').addEventListener('click', async ()=>{
   }
 });
 
+const isMobileUA = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+
 document.getElementById('authGoogleBtn').addEventListener('click', async ()=>{
+  const provider = new GoogleAuthProvider();
   try{
-    await signInWithPopup(auth, new GoogleAuthProvider());
+    if(isMobileUA){
+      // popup nao e confiavel em navegadores mobile (some antes de terminar) — usa redirecionamento
+      await signInWithRedirect(auth, provider);
+    }else{
+      await signInWithPopup(auth, provider);
+    }
   }catch(e){
     setAuthMsg(traduzErroAuth(e.code), 'error');
   }
+});
+
+getRedirectResult(auth).catch((e)=>{
+  if(e && e.code) setAuthMsg(traduzErroAuth(e.code), 'error');
 });
 
 document.getElementById('authForgotBtn').addEventListener('click', async (e)=>{
