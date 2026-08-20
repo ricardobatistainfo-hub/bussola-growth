@@ -742,7 +742,9 @@
   .install-banner{
     position:fixed;
     left:14px; right:14px;
-    bottom:calc(14px + env(safe-area-inset-bottom));
+    /* no Safari: 14px do rodape. em app instalado: encosta no indicador
+       de home (34px) em vez de somar os dois e deixar um vao embaixo */
+    bottom:max(14px, env(safe-area-inset-bottom));
     max-width:460px;
     margin:0 auto;
     display:flex;
@@ -809,7 +811,9 @@
   .bottom-nav{
     position:fixed;
     left:50%;
-    bottom:calc(14px + env(safe-area-inset-bottom));
+    /* no Safari: 14px do rodape. em app instalado: encosta no indicador
+       de home (34px) em vez de somar os dois e deixar um vao embaixo */
+    bottom:max(14px, env(safe-area-inset-bottom));
     transform:translateX(-50%);
     display:flex;
     gap:2px;
@@ -849,7 +853,7 @@
      em standalone o conteudo passa a terminar por baixo do menu */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
-    --nav-space: calc(92px + env(safe-area-inset-bottom));
+    --nav-space: calc(78px + max(14px, env(safe-area-inset-bottom)));
   }
   .wrap{padding-bottom:var(--nav-space) !important;}
 
