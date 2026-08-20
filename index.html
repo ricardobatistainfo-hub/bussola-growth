@@ -740,13 +740,14 @@
 
   /* banner de instalacao, no mesmo estilo visual do app */
   .install-banner{
-    position:fixed;
-    left:14px; right:14px;
-    /* no Safari: 14px do rodape. em app instalado: encosta no indicador
-       de home (34px) em vez de somar os dois e deixar um vao embaixo */
-    bottom:max(14px, env(safe-area-inset-bottom));
+    /* em fluxo, logo acima da barra de menu (order garante a ordem mesmo
+       vindo depois no HTML). antes era fixed com z-index alto e cobria a
+       barra inteira quando aparecia */
+    order:1;
+    flex-shrink:0;
+    width:calc(100% - 28px);
     max-width:460px;
-    margin:0 auto;
+    margin:0 auto 10px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -803,10 +804,6 @@
   }
   .install-close:hover{color:rgba(242,245,250,0.8);}
 
-  @media (max-width:520px){
-    .install-banner{left:10px; right:10px;}
-  }
-
   /* ---- barra de navegacao inferior, estilo app nativo ---- */
   .bottom-nav{
     position:fixed;
@@ -845,19 +842,33 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* espaco reservado para o menu fixo: altura do menu + o quanto ele
-     sobe do rodape. usado tambem no calculo de altura da tela Hoje,
-     para o conteudo nunca terminar por baixo do menu */
-  /* --safe-top acompanha o notch: 28px no Safari, ~47px em modo app
-     instalado. precisa entrar no calculo de altura da tela Hoje, senao
-     em standalone o conteudo passa a terminar por baixo do menu */
+  /* --safe-top acompanha o notch: 28px no Safari, ~47px em modo app instalado */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
-    /* altura do menu flutuante (~62px) + a folga que ele deixa do rodape
-       + uma margem de respiro, para o conteudo nunca terminar por baixo */
-    --nav-space: calc(72px + max(10px, env(safe-area-inset-bottom)));
   }
-  .wrap{padding-bottom:var(--nav-space) !important;}
+
+  /* ===== casca do app =====
+     position:fixed + inset:0 em vez de altura em vh/dvh/JS. e o unico jeito
+     que nao depende de o iOS ja saber a altura da janela no primeiro
+     desenho: em app instalado, dvh nasce menor que a tela real e so
+     corrige depois de uma interacao — era isso que deixava a barra de
+     menu longe do fundo ate a pessoa trocar de aba.
+     a barra e o ultimo filho desta coluna, entao encosta no fim da casca
+     por construcao, sem precisar calcular nada. */
+  #screenApp{
+    position:fixed;
+    inset:0;
+    flex-direction:column;
+  }
+  /* area de conteudo: rola por dentro, entre o topo e a barra de menu */
+  .wrap{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding-bottom:8px !important;
+  }
 
   /* ---- navegacao por 5 telas (estilo app nativo) ---- */
   .app-screen{display:none;}
@@ -1176,16 +1187,20 @@
   /* barra flutuante: retangulo arredondado afastado das bordas, com folga
      embaixo (acima do indicador de home). nao encosta em nenhuma borda —
      e o que da a sensacao de estar pairando sobre o conteudo.
-     nada aqui depende de altura de viewport (dvh/JS): so position:fixed
-     ancorado no rodape, entao nasce certo ja no primeiro quadro, inclusive
-     em app instalado no iOS e com a barra do Safari embaixo */
+     e o ultimo filho da casca (#screenApp, fixed inset:0), nao um elemento
+     com bottom: proprio — assim sua posicao vem do layout da casca e nao de
+     uma altura de janela que o iOS ainda nao sabe no primeiro desenho.
+     a folga do rodape vem de margin-bottom, e a flutuacao das margens
+     laterais + cantos arredondados. */
   .bottom-nav.nav5{
-    /* encosta no limite de baixo: em app instalado, para logo acima do
-       indicador de home (env = 34px); no Safari, uma folga minima de 10px */
-    left:14px; right:14px; bottom:max(10px, env(safe-area-inset-bottom));
-    width:auto;
+    position:static;
+    order:2; /* sempre por ultimo, mesmo com o banner de instalacao presente */
+    flex-shrink:0;
+    width:calc(100% - 28px);
     max-width:612px;
-    margin:0 auto;
+    /* em app instalado para logo acima do indicador de home (env=34px);
+       no Safari, uma folga minima de 10px */
+    margin:0 auto max(10px, env(safe-area-inset-bottom));
     transform:none;
     justify-content:space-between;
     gap:0;
@@ -1281,13 +1296,12 @@
   #screen-hoje.active{
     display:flex;
     flex-direction:column;
-    /* altura util = viewport - padding do topo do wrap - espaco do menu.
-       dvh (e nao vh) para descontar as barras do navegador no celular.
-       CSS puro de proposito: medir por JS (--app-vh) so acertava depois do
-       primeiro layout, e ate la a tela nascia com altura errada — era o que
-       fazia o layout so "assentar" depois de trocar de aba */
-    min-height:calc(100vh - var(--safe-top) - var(--nav-space));
-    min-height:calc(100dvh - var(--safe-top) - var(--nav-space));
+    /* 100% da area de conteudo (.wrap), cuja altura ja vem resolvida pelo
+       flex da casca. porcentagem em vez de vh/dvh/JS de proposito: nao
+       depende de o iOS saber a altura da janela no primeiro desenho, entao
+       a grade ja nasce esticada ate a barra em vez de so depois de trocar
+       de aba */
+    min-height:100%;
   }
   #screen-hoje .progress-hero{
     padding:18px 20px 16px;
@@ -2264,7 +2278,9 @@ function showScreen(id){
   document.querySelectorAll('#bottomNav button').forEach(b=>{
     b.classList.toggle('active', b.dataset.screen === id);
   });
-  window.scrollTo(0,0);
+  // quem rola agora e a area de conteudo, nao a janela
+  const area = document.querySelector('.wrap');
+  if(area) area.scrollTop = 0;
   renderScreenAtual();
 }
 
@@ -2547,7 +2563,7 @@ function showAuthScreen(){
 }
 function showAppScreen(){
   document.getElementById('screenAuth').style.display = 'none';
-  document.getElementById('screenApp').style.display = 'block';
+  document.getElementById('screenApp').style.display = 'flex';
 }
 
 document.getElementById('authSwitchBtn').addEventListener('click', (e)=>{
@@ -2739,9 +2755,10 @@ function wireBottomNav(){
   });
 }
 
-/* a altura da janela nao e mais medida por JS (--app-vh): o menu e
-   position:fixed ancorado no rodape e a tela Hoje usa dvh puro, entao
-   ambos nascem certos no primeiro quadro, sem depender de remedicao. */
+/* a altura da janela nao e mais medida por JS (--app-vh) nem escrita em
+   vh/dvh: a casca #screenApp e position:fixed inset:0 e a barra de menu e
+   o ultimo filho dela, entao a posicao da barra vem do layout e nao de uma
+   altura que o iOS so sabe depois da primeira interacao. */
 
 /* ---------- bloqueia zoom por gesto (iOS Safari ignora user-scalable=no) ---------- */
 ['gesturestart','gesturechange','gestureend'].forEach(evt=>{
