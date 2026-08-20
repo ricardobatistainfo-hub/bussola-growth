@@ -1255,6 +1255,9 @@
     display:flex;
     flex-direction:column;
     min-height:calc(100vh - 130px);
+    /* dvh desconta as barras do navegador no celular; sem isso a grade
+       estica alem da area visivel e fica por baixo do menu inferior */
+    min-height:calc(100dvh - 130px);
   }
   #screen-hoje .progress-hero{
     padding:18px 20px 16px;
@@ -1665,7 +1668,7 @@ const PRIORITIES = ['urgente','importante','essencial'];
 const I18N = {
   it: {
     locale:'it-IT',
-    cat_esposa:'Moglie', cat_filhos:'Figli', cat_espiritual:'Spirituale', cat_trabalho:'Lavoro', cat_lazer:'Tempo libero', cat_servir:'Servizio',
+    cat_esposa:'Moglie', cat_filhos:'Figli', cat_espiritual:'Spirituale', cat_trabalho:'Lavoro', cat_lazer:'Tempo libero', cat_servir:'Servire',
     per_diario:'Giornaliero', per_semanal:'Settimanale', per_mensal:'Mensile',
     pri_urgente:'urgente', pri_importante:'importante', pri_essencial:'essenziale',
     greet_madrugada:'Buonanotte', greet_dia:'Buongiorno', greet_tarde:'Buon pomeriggio', greet_noite:'Buonasera',
@@ -2766,6 +2769,7 @@ onAuthStateChanged(auth, async (user)=>{
     try{
       await loadStateFromCloud(user.uid);
       await checkAndApplyResets();
+      renderDayHero(); // a saudacao foi montada antes do login, sem o apelido
       showScreen('hoje');
       if(!state.apelido) showApelidoModal();
     }catch(e){
