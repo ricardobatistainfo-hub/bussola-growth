@@ -870,6 +870,44 @@
     flex-direction:column;
     overflow:hidden;
   }
+  /* ===== so retrato no celular =====
+     o manifest ja pede portrait-primary, mas o iOS ignora isso em app
+     instalado e nao existe API de travar orientacao que funcione ali. entao
+     a barreira e visual: deitou, cobre a tela e pede para voltar.
+     max-height:520px limita a regra a celular deitado — tablet deitado tem
+     bem mais que isso e continua livre. */
+  #girarAviso{display:none;}
+  @media (orientation:landscape) and (max-height:520px){
+    #girarAviso{
+      display:flex;
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      z-index:100000;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      text-align:center;
+      padding:24px;
+      background:var(--ink);
+    }
+    #girarAviso .girar-icone{
+      font-size:40px;
+      animation:girarDica 1.8s ease-in-out infinite;
+    }
+    #girarAviso .girar-texto{
+      font-family:'JetBrains Mono',monospace;
+      font-size:12px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--gold-soft);
+    }
+  }
+  @keyframes girarDica{
+    0%,100%{transform:rotate(0deg);}
+    50%{transform:rotate(-90deg);}
+  }
+
   /* area de conteudo: rola por dentro, entre o topo e a barra de menu.
 
      width:100% e obrigatorio aqui. o .wrap tem margin:0 auto (para centrar
@@ -1547,6 +1585,12 @@
 </head>
 <body>
 
+<!-- so aparece com o celular deitado; ver #girarAviso no CSS -->
+<div id="girarAviso" aria-hidden="true">
+  <div class="girar-icone">📱</div>
+  <div class="girar-texto" data-i18n="girar_aviso">Gire o celular na vertical</div>
+</div>
+
 <div id="screenAuth" class="auth-wrap">
   <div class="auth-card">
     <div class="auth-eyebrow">Growth</div>
@@ -1759,6 +1803,7 @@ const I18N = {
     auth_reset_sent:'Ti abbiamo inviato un link per reimpostare la password.',
     auth_type_email_first:'Inserisci prima la tua email nel campo sopra.',
     geral_label:'Generale', complete_label:'completo',
+    girar_aviso:'Ruota il telefono in verticale',
     metas_title:'Obiettivi', metas_sub:'Tocca un\'area per vedere i suoi obiettivi.',
     metas_back:'← tutte le aree', metas_active_module:'Modulo attivo',
     metas_area_desc:'obiettivi e attività legati a quest\'area della vita',
@@ -1817,6 +1862,7 @@ const I18N = {
     auth_reset_sent:'Enviamos um link de redefinição para seu e-mail.',
     auth_type_email_first:'Digite seu e-mail no campo acima primeiro.',
     geral_label:'Geral', complete_label:'completo',
+    girar_aviso:'Gire o celular na vertical',
     metas_title:'Metas', metas_sub:'Toque numa área para ver as metas dela.',
     metas_back:'← todas as áreas', metas_active_module:'Módulo ativo',
     metas_area_desc:'metas e tarefas ligadas a esta área da vida',
@@ -1875,6 +1921,7 @@ const I18N = {
     auth_reset_sent:'We sent a reset link to your email.',
     auth_type_email_first:'Type your email in the field above first.',
     geral_label:'Overall', complete_label:'complete',
+    girar_aviso:'Rotate your phone upright',
     metas_title:'Goals', metas_sub:'Tap an area to see its goals.',
     metas_back:'← all areas', metas_active_module:'Active module',
     metas_area_desc:'goals and tasks tied to this area of life',
@@ -2582,7 +2629,40 @@ function showAuthScreen(){
 function showAppScreen(){
   document.getElementById('screenAuth').style.display = 'none';
   document.getElementById('screenApp').style.display = 'flex';
+  reassentarLayout();
 }
+
+/* ---------- refaz o layout, como uma rotacao de tela faria ----------
+   em app instalado no iOS a casca as vezes nasce desenhada contra um
+   viewport que ainda nao e o definitivo: a tela sai estreita e a barra
+   longe do rodape, e so se acerta quando algo obriga o navegador a
+   recalcular — girar o aparelho era o unico jeito de conseguir isso.
+
+   tirar a casca da arvore de layout e devolve-la produz o mesmo efeito
+   sem girar nada. repare que aqui NAO se mede nem se escreve altura
+   nenhuma: so se pede um novo calculo, e quem responde com o valor certo
+   e o proprio navegador. e essa a diferenca para as tentativas antigas,
+   que liam visualViewport.height e gravavam um valor menor que a tela. */
+function reassentarLayout(){
+  const casca = document.getElementById('screenApp');
+  if(!casca || casca.style.display === 'none') return;
+  // sair da arvore de layout zera a rolagem de quem rola por dentro, entao
+  // guardamos a posicao para devolver depois (senao voltar o app da memoria
+  // jogaria a pessoa de volta ao topo da lista)
+  const area = document.querySelector('#screenApp > .wrap');
+  const rolagem = area ? area.scrollTop : 0;
+  const valor = casca.style.display;
+  casca.style.display = 'none';
+  void casca.offsetHeight;   // obriga o reflow enquanto esta fora da arvore
+  casca.style.display = valor;
+  if(area && rolagem) area.scrollTop = rolagem;
+}
+/* a abertura do app instalado leva alguns quadros para assentar, e o
+   pageshow cobre a volta do app da memoria (bfcache) */
+window.addEventListener('load', reassentarLayout);
+window.addEventListener('pageshow', reassentarLayout);
+window.addEventListener('orientationchange', ()=> setTimeout(reassentarLayout, 120));
+[120, 400, 1000].forEach(ms=> setTimeout(reassentarLayout, ms));
 
 document.getElementById('authSwitchBtn').addEventListener('click', (e)=>{
   e.preventDefault();
