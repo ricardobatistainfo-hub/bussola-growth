@@ -1792,7 +1792,9 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
 const CATEGORIES = [
-  {id:'esposa', label:'Esposa', color:'#E0607F'},
+  // o id fica 'esposa' de proposito: e a chave gravada nos dados de quem ja
+  // usa o app. mudar o id perderia as metas dessa area. so o rotulo muda.
+  {id:'esposa', label:'Amor', color:'#E0607F'},
   {id:'filhos', label:'Filhos', color:'#5DA271'},
   {id:'espiritual', label:'Espiritual', color:'#6C7BFF'},
   {id:'trabalho', label:'Trabalho', color:'#4E8FC2'},
@@ -1810,7 +1812,7 @@ const PRIORITIES = ['urgente','importante','essencial'];
 const I18N = {
   it: {
     locale:'it-IT',
-    cat_esposa:'Moglie', cat_filhos:'Figli', cat_espiritual:'Spirituale', cat_trabalho:'Lavoro', cat_lazer:'Tempo libero', cat_servir:'Servire',
+    cat_esposa:'Amore', cat_filhos:'Figli', cat_espiritual:'Spirituale', cat_trabalho:'Lavoro', cat_lazer:'Tempo libero', cat_servir:'Servire',
     per_diario:'Giornaliero', per_semanal:'Settimanale', per_mensal:'Mensile',
     pri_urgente:'urgente', pri_importante:'importante', pri_essencial:'essenziale',
     greet_madrugada:'Buonanotte', greet_dia:'Buongiorno', greet_tarde:'Buon pomeriggio', greet_noite:'Buonasera',
@@ -1869,7 +1871,7 @@ const I18N = {
   },
   pt: {
     locale:'pt-BR',
-    cat_esposa:'Esposa', cat_filhos:'Filhos', cat_espiritual:'Espiritual', cat_trabalho:'Trabalho', cat_lazer:'Lazer', cat_servir:'Servir',
+    cat_esposa:'Amor', cat_filhos:'Filhos', cat_espiritual:'Espiritual', cat_trabalho:'Trabalho', cat_lazer:'Lazer', cat_servir:'Servir',
     per_diario:'Diário', per_semanal:'Semanal', per_mensal:'Mensal',
     pri_urgente:'urgente', pri_importante:'importante', pri_essencial:'essencial',
     greet_madrugada:'Boa madrugada', greet_dia:'Bom dia', greet_tarde:'Boa tarde', greet_noite:'Boa noite',
@@ -1928,7 +1930,7 @@ const I18N = {
   },
   en: {
     locale:'en-US',
-    cat_esposa:'Spouse', cat_filhos:'Children', cat_espiritual:'Spiritual', cat_trabalho:'Work', cat_lazer:'Leisure', cat_servir:'Serving',
+    cat_esposa:'Love', cat_filhos:'Children', cat_espiritual:'Spiritual', cat_trabalho:'Work', cat_lazer:'Leisure', cat_servir:'Serving',
     per_diario:'Daily', per_semanal:'Weekly', per_mensal:'Monthly',
     pri_urgente:'urgent', pri_importante:'important', pri_essencial:'essential',
     greet_madrugada:'Good night', greet_dia:'Good morning', greet_tarde:'Good afternoon', greet_noite:'Good evening',
