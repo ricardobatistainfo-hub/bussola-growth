@@ -1285,6 +1285,12 @@
     text-transform:uppercase;
     color:var(--gold-soft);
     flex-shrink:0;
+    /* o iOS so borbulha click ate o document a partir de elemento que ele
+       considere clicavel; sem isto, o atalho do medidor (5 toques aqui)
+       nunca dispara no iPhone. nao muda nada no visual. */
+    cursor:pointer;
+    -webkit-user-select:none;
+    user-select:none;
   }
   .greeting-title-compact{
     font-family:'Fraunces',serif;
@@ -2582,7 +2588,11 @@ function showAuthScreen(){
 function showAppScreen(){
   document.getElementById('screenAuth').style.display = 'none';
   document.getElementById('screenApp').style.display = 'flex';
-  reassentarLayout();
+  // e AQUI que o relogio do reassentamento comeca. os timers presos ao
+  // carregamento da pagina nao servem: todos disparam antes de o Firebase
+  // resolver o login, com a casca ainda em display:none, e a funcao sai
+  // fora. so depois desta linha existe layout para refazer.
+  reassentarDepois();
 }
 
 /* ---------- refaz o layout, como uma rotacao de tela faria ----------
@@ -2610,12 +2620,19 @@ function reassentarLayout(){
   casca.style.display = valor;
   if(area && rolagem) area.scrollTop = rolagem;
 }
-/* a abertura do app instalado leva alguns quadros para assentar, e o
-   pageshow cobre a volta do app da memoria (bfcache) */
-window.addEventListener('load', reassentarLayout);
-window.addEventListener('pageshow', reassentarLayout);
-window.addEventListener('orientationchange', ()=> setTimeout(reassentarLayout, 120));
-[120, 400, 1000].forEach(ms=> setTimeout(reassentarLayout, ms));
+/* refaz o layout DEPOIS que a casca ja apareceu e ja foi desenhada ao menos
+   uma vez. chamar no mesmo tique em que se troca o display nao adianta: o
+   navegador ainda nem calculou o layout, entao nao ha o que recalcular.
+   dois requestAnimationFrame garantem um quadro inteiro desenhado; os
+   tempos maiores cobrem a abertura do app instalado, que leva alguns
+   quadros ate a janela assentar no tamanho definitivo. */
+function reassentarDepois(){
+  requestAnimationFrame(()=> requestAnimationFrame(reassentarLayout));
+  [150, 500, 1200].forEach(ms=> setTimeout(reassentarLayout, ms));
+}
+/* pageshow cobre a volta do app da memoria (bfcache) */
+window.addEventListener('pageshow', reassentarDepois);
+window.addEventListener('orientationchange', ()=> setTimeout(reassentarLayout, 150));
 
 document.getElementById('authSwitchBtn').addEventListener('click', (e)=>{
   e.preventDefault();
@@ -2923,12 +2940,25 @@ function wireBottomNav(){
 
   if(PELA_URL) alternarPainel();
 
-  document.addEventListener('click', (e)=>{
-    if(!e.target.closest || !e.target.closest('.brand-tag')) return;
+  // touchend alem de click: no iPhone o click em elemento comum e pouco
+  // confiavel, e um toque nao pode contar duas vezes — dai a janela de
+  // 350ms que ignora o click que o iOS emite logo apos o touchend
+  let ultimoToque = 0;
+  function contar(){
     const agora = Date.now();
     toques = (agora - ultimo < 900) ? toques + 1 : 1;
     ultimo = agora;
     if(toques >= TOQUES_NECESSARIOS){ toques = 0; alternarPainel(); }
+  }
+  document.addEventListener('touchend', (e)=>{
+    if(!e.target.closest || !e.target.closest('.brand-tag')) return;
+    ultimoToque = Date.now();
+    contar();
+  }, {passive:true});
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest || !e.target.closest('.brand-tag')) return;
+    if(Date.now() - ultimoToque < 350) return; // ja contado no touchend
+    contar();
   });
 })();
 
