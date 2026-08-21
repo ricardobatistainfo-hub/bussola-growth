@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- "black" e nao "black-translucent" DE PROPOSITO. com black-translucent o
+     iOS poe o app em tela cheia por baixo da barra de status e, na abertura,
+     posiciona a janela no topo da tela mas informa a altura SEM a barra de
+     status: tudo que se ancora no rodape para ~47px antes do fim, e so
+     acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
+     barra de menu nascer longe do fundo. com black a janela ja nasce
+     coerente e nao existe o que corrigir depois. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Growth">
 <meta name="theme-color" content="#161A23">
 <meta name="color-scheme" content="dark">
@@ -842,9 +849,18 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* --safe-top acompanha o notch: 28px no Safari, ~47px em modo app instalado */
+  /* folga do topo do conteudo.
+     no Safari sao 28px, que descolam o texto da barra de enderecos.
+     em app instalado a barra de status agora e opaca (ver a meta
+     apple-mobile-web-app-status-bar-style no <head>), entao o conteudo ja
+     comeca ABAIXO dela e env(safe-area-inset-top) vale 0 — 28px ali seria
+     folga sobre folga e empurraria a saudacao para baixo. 10px devolve o
+     espacamento que a tela tinha quando o app era translucido. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
+  }
+  @media (display-mode: standalone){
+    :root{ --safe-top: max(10px, env(safe-area-inset-top)); }
   }
 
   /* ===== casca do app =====
