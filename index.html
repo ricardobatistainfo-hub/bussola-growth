@@ -848,17 +848,27 @@
   }
 
   /* ===== casca do app =====
-     position:fixed + inset:0 em vez de altura em vh/dvh/JS. e o unico jeito
-     que nao depende de o iOS ja saber a altura da janela no primeiro
-     desenho: em app instalado, dvh nasce menor que a tela real e so
-     corrige depois de uma interacao — era isso que deixava a barra de
-     menu longe do fundo ate a pessoa trocar de aba.
-     a barra e o ultimo filho desta coluna, entao encosta no fim da casca
-     por construcao, sem precisar calcular nada. */
+     a altura da casca vem dos quatro offsets de um position:fixed, e nao de
+     vh/dvh/% nem de medicao por JS. e o unico jeito que nao depende de o iOS
+     ja saber a altura da janela no primeiro desenho: em app instalado, dvh
+     nasce menor que a tela real e so se corrige depois de uma interacao —
+     era isso que obrigava a trocar de aba para a tela Hoje assentar.
+     a barra de menu e o ultimo filho desta coluna, entao encosta no fim da
+     casca por construcao, sem precisar calcular posicao.
+
+     duas armadilhas ja pagas caro aqui, nao repetir:
+     1. NAO trocar os offsets por inset: (shorthand mais novo). se o Safari
+        do aparelho nao reconhecer, a casca encolhe para a altura do
+        conteudo e a barra fica parada no meio da tela.
+     2. NAO acrescentar height: nem 100%, nem -webkit-fill-available, nem
+        valor vindo de visualViewport.height. em app instalado no iOS os
+        tres nascem MENORES que a tela: a casca encolhe, a barra sobe e
+        sobra uma faixa morta embaixo. os offsets sozinhos ja bastam. */
   #screenApp{
     position:fixed;
-    inset:0;
+    top:0; left:0; right:0; bottom:0;
     flex-direction:column;
+    overflow:hidden;
   }
   /* area de conteudo: rola por dentro, entre o topo e a barra de menu */
   .wrap{
@@ -2755,10 +2765,12 @@ function wireBottomNav(){
   });
 }
 
-/* a altura da janela nao e mais medida por JS (--app-vh) nem escrita em
-   vh/dvh: a casca #screenApp e position:fixed inset:0 e a barra de menu e
-   o ultimo filho dela, entao a posicao da barra vem do layout e nao de uma
-   altura que o iOS so sabe depois da primeira interacao. */
+/* a altura da janela nao e medida por JS em lugar nenhum, de proposito: a
+   casca #screenApp e um position:fixed com os quatro offsets em 0 e a barra
+   de menu e o ultimo filho dela, entao a posicao da barra vem do layout e
+   nao de uma altura que o iOS so sabe depois da primeira interacao.
+   ver o comentario de #screenApp no CSS antes de reintroduzir qualquer
+   medicao aqui. */
 
 /* ---------- bloqueia zoom por gesto (iOS Safari ignora user-scalable=no) ---------- */
 ['gesturestart','gesturechange','gestureend'].forEach(evt=>{
