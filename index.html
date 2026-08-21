@@ -14,34 +14,6 @@
      coerente e nao existe o que corrigir depois. -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Growth">
-<script>
-/* sentido do giro para o app continuar em pe com o aparelho deitado.
-   screen.orientation.angle diz quanto o conteudo foi girado no sentido
-   horario a partir da posicao natural, entao contra-giramos -angulo.
-   window.orientation e o caminho para iOS anterior ao 16.4, onde
-   screen.orientation ainda nao existe. inline no <head> de proposito: a
-   classe precisa estar no <html> antes do primeiro desenho, senao o app
-   aparece deitado por um instante antes de se endireitar. */
-(function(){
-  function marcar(){
-    var a;
-    if(window.screen && screen.orientation && typeof screen.orientation.angle === 'number'){
-      a = screen.orientation.angle;
-    } else if(typeof window.orientation === 'number'){
-      a = window.orientation < 0 ? 270 : window.orientation;
-    } else { a = 0; }
-    var c = document.documentElement.classList;
-    c.toggle('giro-90', a === 90);
-    c.toggle('giro-270', a === 270);
-  }
-  marcar();
-  window.addEventListener('orientationchange', marcar);
-  window.addEventListener('resize', marcar);
-  if(window.screen && screen.orientation && screen.orientation.addEventListener){
-    screen.orientation.addEventListener('change', marcar);
-  }
-})();
-</script>
 <meta name="theme-color" content="#161A23">
 <meta name="color-scheme" content="dark">
 <title>Growth</title>
@@ -914,45 +886,44 @@
     flex-direction:column;
     overflow:hidden;
   }
-  /* ===== app sempre em pe =====
+  /* ===== aviso de tela deitada =====
      o iOS nao deixa um app web travar a orientacao: screen.orientation.lock
      nao existe no Safari e o orientation do manifest e ignorado em app
-     instalado. o aparelho vai girar de qualquer jeito. o que da para fazer e
-     contra-girar: deitou a tela, o app roda 90 graus no sentido contrario e
-     continua em pe para quem olha.
-
-     a caixa passa a ter largura 100vh e altura 100vw (as medidas da janela
-     trocadas), gira em torno do canto superior esquerdo e anda de volta para
-     o lugar. o transform no body tambem faz dele o bloco continente dos
-     position:fixed de dentro, entao a casca e os modais acompanham a rotacao
-     sem nenhum ajuste.
-
-     existem DUAS paisagens (deitar para a esquerda e para a direita) e o CSS
-     sozinho nao as distingue: @media (orientation:landscape) casa com as
-     duas. por isso o sentido do giro vem do angulo informado pelo aparelho,
-     escrito como classe no <html> pelo script do <head>. contra-girar para o
-     lado errado deixaria o app de cabeca para baixo.
-
-     so vale para celular (max-height:520px com a tela deitada); tablet
-     deitado continua livre. em retrato nada disto se aplica, entao o caminho
-     normal do app fica intocado.
-
-     limite conhecido: teclado, barra de status e menus do sistema seguem a
-     orientacao fisica do aparelho, e nao a do app. e o preco de nao existir
-     API de bloqueio. */
+     instalado (um WhatsApp consegue porque app nativo declara isso no
+     Info.plist, campo que app web nao tem). o aparelho vai girar de qualquer
+     jeito, entao o que resta e cobrir a tela e pedir para voltar.
+     max-height:520px limita a celular deitado — tablet deitado tem bem mais
+     que isso e continua livre. */
+  #girarAviso{display:none;}
   @media (orientation:landscape) and (max-height:520px){
-    html,body{overflow:hidden;}
-    body{
+    #girarAviso{
+      display:flex;
       position:fixed;
-      top:0; left:0;
-      width:100vh;    /* caixa em pe: as medidas da janela trocadas */
-      height:100vw;
-      transform-origin:top left;
+      top:0; left:0; right:0; bottom:0;
+      z-index:100000;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      text-align:center;
+      padding:24px;
+      background:var(--ink);
     }
-    /* girar -90 leva a caixa para y negativo; descer 100vh devolve ao lugar */
-    html.giro-90 body{ transform:translateY(100vh) rotate(-90deg); }
-    /* girar +90 leva a caixa para x negativo; andar 100vw devolve ao lugar */
-    html.giro-270 body{ transform:translateX(100vw) rotate(90deg); }
+    #girarAviso .girar-icone{
+      font-size:40px;
+      animation:girarDica 1.8s ease-in-out infinite;
+    }
+    #girarAviso .girar-texto{
+      font-family:'JetBrains Mono',monospace;
+      font-size:12px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--gold-soft);
+    }
+  }
+  @keyframes girarDica{
+    0%,100%{transform:rotate(0deg);}
+    50%{transform:rotate(-90deg);}
   }
 
   /* area de conteudo: rola por dentro, entre o topo e a barra de menu.
@@ -1638,6 +1609,12 @@
 </head>
 <body>
 
+<!-- so aparece com o celular deitado; ver #girarAviso no CSS -->
+<div id="girarAviso" aria-hidden="true">
+  <div class="girar-icone">📱</div>
+  <div class="girar-texto" data-i18n="girar_aviso">Gire o celular na vertical</div>
+</div>
+
 <div id="screenAuth" class="auth-wrap">
   <div class="auth-card">
     <div class="auth-eyebrow">Growth</div>
@@ -1850,6 +1827,7 @@ const I18N = {
     auth_reset_sent:'Ti abbiamo inviato un link per reimpostare la password.',
     auth_type_email_first:'Inserisci prima la tua email nel campo sopra.',
     geral_label:'Generale', complete_label:'completo',
+    girar_aviso:'Ruota il telefono in verticale',
     metas_title:'Obiettivi', metas_sub:'Tocca un\'area per vedere i suoi obiettivi.',
     metas_back:'← tutte le aree', metas_active_module:'Modulo attivo',
     metas_area_desc:'obiettivi e attività legati a quest\'area della vita',
@@ -1908,6 +1886,7 @@ const I18N = {
     auth_reset_sent:'Enviamos um link de redefinição para seu e-mail.',
     auth_type_email_first:'Digite seu e-mail no campo acima primeiro.',
     geral_label:'Geral', complete_label:'completo',
+    girar_aviso:'Gire o celular na vertical',
     metas_title:'Metas', metas_sub:'Toque numa área para ver as metas dela.',
     metas_back:'← todas as áreas', metas_active_module:'Módulo ativo',
     metas_area_desc:'metas e tarefas ligadas a esta área da vida',
@@ -1966,6 +1945,7 @@ const I18N = {
     auth_reset_sent:'We sent a reset link to your email.',
     auth_type_email_first:'Type your email in the field above first.',
     geral_label:'Overall', complete_label:'complete',
+    girar_aviso:'Rotate your phone upright',
     metas_title:'Goals', metas_sub:'Tap an area to see its goals.',
     metas_back:'← all areas', metas_active_module:'Active module',
     metas_area_desc:'goals and tasks tied to this area of life',
