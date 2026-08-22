@@ -525,6 +525,12 @@
     gap:10px;
     padding:9px 0;
     border-bottom:1px solid var(--line);
+  }
+  /* a animacao de entrada vale so para a linha recem-adicionada.
+     ela estava em .task-row e, como marcar uma meta redesenha a lista
+     inteira, TODAS as linhas reentravam de uma vez a cada toque — era o
+     piscar geral. ver metaRecemAdicionada no script. */
+  .task-row.nova{
     animation:rowIn .35s ease both;
   }
   @keyframes rowIn{
@@ -2296,8 +2302,13 @@ function periodBlockHtml(catId, period){
   </div>`;
 }
 
+/* id da meta que acabou de ser criada. so ela recebe a classe "nova" e,
+   com isso, a animacao de entrada. zerado logo depois do desenho, para a
+   linha nao reanimar nos redesenhos seguintes. */
+let metaRecemAdicionada = null;
+
 function taskRowHtml(catId, periodId, task){
-  return `<div class="task-row" data-id="${task.id}">
+  return `<div class="task-row${task.id === metaRecemAdicionada ? ' nova' : ''}" data-id="${task.id}">
     <div class="task-check ${task.done?'done':''}" data-toggle="${task.id}"></div>
     <div class="task-text ${task.done?'done':''}">${escapeHtml(task.text)}</div>
     <span class="tag ${task.priority}">${priLabel(task.priority)}</span>
@@ -2352,8 +2363,9 @@ function wirePeriodBlock(catId, periodId, raiz){
   const doAdd = async ()=>{
     const text = input.value.trim();
     if(!text) return;
+    const novoId = 'id'+Date.now()+Math.random().toString(36).slice(2,7);
     state[catId][periodId].push({
-      id: 'id'+Date.now()+Math.random().toString(36).slice(2,7),
+      id: novoId,
       text,
       priority: select.value,
       done:false
@@ -2361,7 +2373,11 @@ function wirePeriodBlock(catId, periodId, raiz){
     input.value='';
     haptic(8);
     await saveState();
+    // so esta linha entra animada; o zeramento logo apos o desenho impede
+    // que ela reanime toda vez que a lista for redesenhada depois
+    metaRecemAdicionada = novoId;
     renderAll();
+    metaRecemAdicionada = null;
   };
 
   addBtn.addEventListener('click', doAdd);
