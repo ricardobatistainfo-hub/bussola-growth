@@ -2311,8 +2311,17 @@ function escapeHtml(str){
   return d.innerHTML;
 }
 
-function wirePeriodBlock(catId, periodId){
-  const block = document.querySelector(`.task-panel[data-period="${periodId}"][data-cat="${catId}"]`);
+/* raiz e obrigatoria: e o container que acabou de ser desenhado.
+
+   procurar com document.querySelector aqui era um bug. as telas nao saem do
+   DOM, so ficam escondidas, e a tela Metas gera um bloco com os MESMOS
+   data-cat e data-period da tela Diario quando alguem abre uma categoria.
+   como #screen-metas vem antes de #screen-diario no HTML, o querySelector
+   global achava o bloco de Metas primeiro: o bloco do Diario daquela
+   categoria ficava sem nenhum listener (nao adicionava, nao marcava, nao
+   apagava) e o de Metas recebia os eventos duas vezes. */
+function wirePeriodBlock(catId, periodId, raiz){
+  const block = raiz && raiz.querySelector(`.task-panel[data-period="${periodId}"][data-cat="${catId}"]`);
   if(!block) return;
 
   block.querySelectorAll('[data-toggle]').forEach(el=>{
@@ -2551,7 +2560,7 @@ function renderCategoryDetail(){
       renderCategoryDetail();
     });
   });
-  wirePeriodBlock(cat.id, period.id);
+  wirePeriodBlock(cat.id, period.id, el);
 }
 
 function renderDiarioScreen(){
@@ -2562,7 +2571,7 @@ function renderDiarioScreen(){
       ${periodBlockHtml(c.id, PERIODS[0])}
     </div>`;
   }).join('');
-  CATEGORIES.forEach(c=> wirePeriodBlock(c.id, 'diario'));
+  CATEGORIES.forEach(c=> wirePeriodBlock(c.id, 'diario', el));
 }
 
 let progressoPeriod = 'diario';
