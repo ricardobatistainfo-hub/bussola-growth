@@ -2335,30 +2335,73 @@ function escapeHtml(str){
    global achava o bloco de Metas primeiro: o bloco do Diario daquela
    categoria ficava sem nenhum listener (nao adicionava, nao marcava, nao
    apagava) e o de Metas recebia os eventos duas vezes. */
+/* ---------- atualizacoes cirurgicas ----------
+   marcar, adicionar e apagar mexem so no que mudou, em vez de refazer o
+   HTML da tela. redesenhar recriava todos os elementos, e elemento recriado
+   REINICIA suas animacoes CSS — inclusive as infinitas do botao Adicionar e
+   do painel dourado (authGlowPulse). como todas reiniciavam no mesmo quadro,
+   a tela inteira pulsava junto a cada toque.
+   nao voltar a chamar renderAll() daqui: e exatamente o que causava isso. */
+
+function atualizarContador(block, catId, periodId){
+  const itens = state[catId][periodId];
+  const el = block.querySelector('.period-count');
+  if(el) el.textContent = itens.filter(t=>t.done).length + '/' + itens.length;
+}
+
+/* as barras por periodo da tela Metas vem do que esta marcado, entao
+   precisam acompanhar. so faz sentido se a tela Metas estiver aberta
+   mostrando justamente esta categoria. */
+function atualizarResumoMetas(catId){
+  if(currentScreen !== 'metas' || detailCategory !== catId) return;
+  const cols = document.querySelectorAll('#metasDetail .evo-bar-col');
+  PERIODS.forEach((p, i)=>{
+    const col = cols[i];
+    if(!col) return;
+    const itens = state[catId][p.id];
+    const pctP = itens.length === 0 ? 0 : Math.round((itens.filter(tk=>tk.done).length/itens.length)*100);
+    const rot = col.querySelector('.evo-bar-pct');
+    const barra = col.querySelector('.evo-bar-fill');
+    if(rot) rot.textContent = pctP + '%';
+    if(barra) barra.style.height = pctP + '%';
+  });
+}
+
+/* liga UMA linha. usada tanto no desenho do bloco quanto ao adicionar uma
+   meta nova, para a linha recem-criada nascer ja funcionando sem precisar
+   religar as outras (religar todas daria evento em dobro). */
+function wireTaskRow(row, block, catId, periodId){
+  const chk = row.querySelector('[data-toggle]');
+  if(chk) chk.addEventListener('click', async ()=>{
+    const task = state[catId][periodId].find(t=>t.id===chk.dataset.toggle);
+    if(!task) return;
+    task.done = !task.done;
+    haptic(task.done ? 10 : 6);
+    chk.classList.toggle('done', task.done);
+    const txt = row.querySelector('.task-text');
+    if(txt) txt.classList.toggle('done', task.done);
+    atualizarContador(block, catId, periodId);
+    atualizarResumoMetas(catId);
+    await saveState();
+  });
+
+  const del = row.querySelector('[data-del]');
+  if(del) del.addEventListener('click', async ()=>{
+    state[catId][periodId] = state[catId][periodId].filter(t=>t.id!==del.dataset.del);
+    haptic([10,30,10]);
+    row.remove();
+    atualizarContador(block, catId, periodId);
+    atualizarResumoMetas(catId);
+    await saveState();
+  });
+}
+
 function wirePeriodBlock(catId, periodId, raiz){
   const block = raiz && raiz.querySelector(`.task-panel[data-period="${periodId}"][data-cat="${catId}"]`);
   if(!block) return;
 
-  block.querySelectorAll('[data-toggle]').forEach(el=>{
-    el.addEventListener('click', async ()=>{
-      const id = el.dataset.toggle;
-      const task = state[catId][periodId].find(t=>t.id===id);
-      task.done = !task.done;
-      haptic(task.done ? 10 : 6);
-      await saveState();
-      renderAll();
-    });
-  });
-
-  block.querySelectorAll('[data-del]').forEach(el=>{
-    el.addEventListener('click', async ()=>{
-      const id = el.dataset.del;
-      state[catId][periodId] = state[catId][periodId].filter(t=>t.id!==id);
-      haptic([10,30,10]);
-      await saveState();
-      renderAll();
-    });
-  });
+  const lista = block.querySelector('.task-list');
+  block.querySelectorAll('.task-row').forEach(row=> wireTaskRow(row, block, catId, periodId));
 
   const addBtn = block.querySelector(`[data-add="${periodId}"]`);
   const input = block.querySelector(`[data-input="${periodId}"]`);
@@ -2368,20 +2411,29 @@ function wirePeriodBlock(catId, periodId, raiz){
     const text = input.value.trim();
     if(!text) return;
     const novoId = 'id'+Date.now()+Math.random().toString(36).slice(2,7);
-    state[catId][periodId].push({
-      id: novoId,
-      text,
-      priority: select.value,
-      done:false
-    });
+    const nova = { id: novoId, text, priority: select.value, done:false };
+    state[catId][periodId].push(nova);
     input.value='';
     haptic(8);
-    await saveState();
-    // so esta linha entra animada; o zeramento logo apos o desenho impede
-    // que ela reanime toda vez que a lista for redesenhada depois
+
+    // "vazio" some quando a primeira meta entra
+    const vazio = lista && lista.querySelector('.empty-state');
+    if(vazio) vazio.remove();
+
+    // so esta linha nasce animada; metaRecemAdicionada e zerado logo apos
+    // gerar o HTML para ela nao reanimar em desenhos posteriores
     metaRecemAdicionada = novoId;
-    renderAll();
+    const molde = document.createElement('div');
+    molde.innerHTML = taskRowHtml(catId, periodId, nova);
     metaRecemAdicionada = null;
+    const row = molde.firstElementChild;
+    if(lista && row){
+      lista.appendChild(row);
+      wireTaskRow(row, block, catId, periodId);
+    }
+    atualizarContador(block, catId, periodId);
+    atualizarResumoMetas(catId);
+    await saveState();
   };
 
   addBtn.addEventListener('click', doAdd);
