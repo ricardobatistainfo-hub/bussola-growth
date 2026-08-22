@@ -2092,9 +2092,13 @@ function normalizeState(){
   });
 }
 
+/* ultima virada diaria que ja passou. 23:59 no horario do proprio aparelho:
+   as metas do dia ficam marcadas ate o fim do dia e desmarcam na virada.
+   com o app aberto isso acontece sozinho, porque checkAndApplyResets roda a
+   cada minuto; com o app fechado, na proxima vez que ele abrir. */
 function lastPastDailyBoundary(now){
   const d = new Date(now);
-  d.setHours(22,0,0,0);
+  d.setHours(23,59,0,0);
   if(d > now) d.setDate(d.getDate()-1);
   return d;
 }
