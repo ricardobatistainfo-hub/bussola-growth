@@ -5,15 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- "black" e nao "black-translucent" DE PROPOSITO. com black-translucent o
-     iOS poe o app em tela cheia por baixo da barra de status e, na abertura,
-     posiciona a janela no topo da tela mas informa a altura SEM a barra de
-     status: tudo que se ancora no rodape para ~47px antes do fim, e so
-     acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
-     barra de menu nascer longe do fundo. com black a janela ja nasce
-     coerente e nao existe o que corrigir depois. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<!-- black-translucent poe o app em tela cheia POR BAIXO da barra de status,
+     que e o visual desejado: o fundo do app vai ate o topo, atras da hora,
+     do wifi e da bateria.
+     o preco e um defeito conhecido do iOS: na abertura ele posiciona a
+     janela no topo da tela mas informa a altura SEM a barra de status, e
+     tudo que se ancora no rodape para ~47px antes do fim (so uma rotacao
+     fazia o iOS recalcular). isso e compensado no script "fundo da tela",
+     mais abaixo no <head> — NAO remover um sem o outro. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
+<script>
+/* ---------- fundo da tela (compensa o defeito do black-translucent) ----------
+   em app instalado no iOS, na abertura, a janela nasce no topo da tela mas
+   com a altura informada SEM a barra de status. quem se ancora no rodape para
+   ~47px antes do fim, ate uma rotacao obrigar o iOS a recalcular.
+
+   aqui NAO se define altura: a casca continua sendo um position:fixed com os
+   quatro offsets, e so o offset de baixo ganha um empurrao igual ao pedaco
+   que faltou. quando o iOS se corrige sozinho, a diferenca vira 0 e o
+   empurrao some junto — nao ha valor gravado para ficar errado.
+
+   as tres condicoes existem porque compensar na hora errada e pior que o
+   defeito (a barra sairia da tela):
+     1. so em app instalado — no Safari a diferenca e a barra do navegador
+     2. so se a falta for igual ao inset do topo (+-4px), que e a assinatura
+        deste defeito e nao de teclado aberto ou tela deitada
+     3. so ate 80px, teto de seguranca */
+(function(){
+  function insetTopo(){
+    const p = document.createElement('div');
+    p.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;'+
+      'padding-top:env(safe-area-inset-top)';
+    document.body.appendChild(p);
+    const v = Math.round(parseFloat(getComputedStyle(p).paddingTop) || 0);
+    p.remove();
+    return v;
+  }
+  function ajustar(){
+    const instalado = window.navigator.standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches;
+    let falta = 0;
+    if(instalado && window.screen && window.screen.height){
+      const d = Math.round(window.screen.height - window.innerHeight);
+      const topo = insetTopo();
+      if(d > 0 && d <= 80 && topo > 0 && Math.abs(d - topo) <= 4) falta = d;
+    }
+    document.documentElement.style.setProperty('--falta-fundo', falta + 'px');
+  }
+  function agendar(){
+    if(!document.body){ document.addEventListener('DOMContentLoaded', agendar, {once:true}); return; }
+    ajustar();
+    // a abertura leva alguns quadros ate a janela assentar
+    requestAnimationFrame(()=> requestAnimationFrame(ajustar));
+    [150, 500, 1200].forEach(ms=> setTimeout(ajustar, ms));
+  }
+  agendar();
+  window.addEventListener('resize', ajustar);
+  window.addEventListener('orientationchange', ()=> setTimeout(ajustar, 150));
+  window.addEventListener('pageshow', agendar);
+})();
+</script>
 <meta name="theme-color" content="#161A23">
 <meta name="color-scheme" content="dark">
 <title>Growth</title>
@@ -855,18 +907,12 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* folga do topo do conteudo.
-     no Safari sao 28px, que descolam o texto da barra de enderecos.
-     em app instalado a barra de status agora e opaca (ver a meta
-     apple-mobile-web-app-status-bar-style no <head>), entao o conteudo ja
-     comeca ABAIXO dela e env(safe-area-inset-top) vale 0 — 28px ali seria
-     folga sobre folga e empurraria a saudacao para baixo. 10px devolve o
-     espacamento que a tela tinha quando o app era translucido. */
+  /* folga do topo do conteudo. o app e tela cheia por baixo da barra de
+     status, entao o conteudo comeca em y=0 e precisa descer sozinho o
+     tamanho do recorte: env(safe-area-inset-top) vale ~47px no iPhone com
+     notch. os 28px sao o piso para Safari e aparelhos sem recorte. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
-  }
-  @media (display-mode: standalone){
-    :root{ --safe-top: max(10px, env(safe-area-inset-top)); }
   }
 
   /* ===== casca do app =====
@@ -888,7 +934,12 @@
         sobra uma faixa morta embaixo. os offsets sozinhos ja bastam. */
   #screenApp{
     position:fixed;
-    top:0; left:0; right:0; bottom:0;
+    top:0; left:0; right:0;
+    /* --falta-fundo e escrito pelo script "fundo da tela" do <head> e vale 0
+       em tudo que nao seja a abertura defeituosa do app instalado no iOS.
+       negativo de proposito: estica a casca ate o fim real da tela quando o
+       iOS informa a janela mais curta do que ela e. */
+    bottom:calc(0px - var(--falta-fundo, 0px));
     flex-direction:column;
     overflow:hidden;
   }
