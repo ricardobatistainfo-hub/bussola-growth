@@ -3,3 +3,6 @@
 # informam ao iOS a geometria da tela na abertura (ver os
 # apple-touch-startup-image no <head> do index.html)
 !splash/*.png
+# os icones do app tambem: o manifest.json aponta para eles por caminho, e
+# sem eles no repositorio o app instalado nao encontra o icone
+!icon-*.png
