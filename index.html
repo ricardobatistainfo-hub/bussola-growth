@@ -2900,6 +2900,16 @@ document.getElementById('authSubmitBtn').addEventListener('click', async ()=>{
   }
 });
 
+/* service worker, copiado do app Banca. sem ele, o Safari pode nao tratar
+   o app como PWA completo mesmo com manifest valido — e um app "quase mas
+   nao totalmente" instalado e o tipo de coisa que explicaria a janela
+   relatada ficar menor que a tela real em app instalado. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
 const isMobileUA = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
 
 document.getElementById('authGoogleBtn').addEventListener('click', async ()=>{
