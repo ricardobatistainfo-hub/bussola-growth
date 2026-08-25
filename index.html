@@ -2240,19 +2240,37 @@ async function loadStateFromCloud(uid){
   userDocRef = ref;
 }
 
-/* a primeira leitura logo apos instalar o app costuma pegar a rede ainda
-   acordando, e uma falha ali deixava a tela Hoje em branco para sempre.
-   tres tentativas com espera crescente resolvem sem incomodar ninguem. */
-async function carregarComRetentativa(uid, tentativas = 3){
+/* nao adianta tentar ler enquanto o aparelho se diz offline: a tentativa
+   queima na hora e gasta o orcamento de retentativas a toa. espera o evento
+   'online', com teto para nunca travar o app se o navegador nao avisar. */
+async function esperarRede(teto = 6000){
+  if(navigator.onLine !== false) return;
+  await new Promise(resolve=>{
+    const pronto = ()=>{
+      window.removeEventListener('online', pronto);
+      clearTimeout(cronometro);
+      resolve();
+    };
+    const cronometro = setTimeout(pronto, teto);
+    window.addEventListener('online', pronto);
+  });
+}
+
+/* a primeira leitura logo apos instalar o app pega a rede ainda acordando, e
+   uma falha ali deixava a tela Hoje em branco. cinco tentativas com espera
+   crescente dao cerca de 6s de janela — antes eram tres em 1,5s, curto
+   demais: a falha voltou a acontecer. */
+async function carregarComRetentativa(uid, tentativas = 5){
   let ultimoErro;
   for(let i = 0; i < tentativas; i++){
     try{
+      await esperarRede();
       await loadStateFromCloud(uid);
       return;
     }catch(e){
       ultimoErro = e;
       if(i < tentativas - 1){
-        await new Promise(r=> setTimeout(r, 500 * (i + 1)));
+        await new Promise(r=> setTimeout(r, 600 * (i + 1)));
       }
     }
   }
