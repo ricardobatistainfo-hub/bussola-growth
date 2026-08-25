@@ -907,27 +907,31 @@
   }
 
   /* ===== casca do app =====
-     a altura da casca vem dos quatro offsets de um position:fixed, e nao de
-     vh/dvh/% nem de medicao por JS. e o unico jeito que nao depende de o iOS
-     ja saber a altura da janela no primeiro desenho: em app instalado, dvh
-     nasce menor que a tela real e so se corrige depois de uma interacao —
-     era isso que obrigava a trocar de aba para a tela Hoje assentar.
+     em FLUXO NORMAL com height:100dvh, igual ao #root do app Vertice. nao
+     usar position:fixed aqui.
+
+     a diferenca importa por causa de onde cada um busca a altura: um
+     elemento fixo se ancora no viewport de LAYOUT, e em app instalado com
+     black-translucent esse viewport nasce ~50px mais curto que a tela — a
+     casca encolhia junto e a barra de menu subia. dvh conhece a tela toda.
+     foi a ultima peca: a meta e a raiz travada ja estavam certas, faltava
+     tirar o fixed daqui.
+
      a barra de menu e o ultimo filho desta coluna, entao encosta no fim da
      casca por construcao, sem precisar calcular posicao.
 
-     duas armadilhas ja pagas caro aqui, nao repetir:
-     1. NAO trocar os offsets por inset: (shorthand mais novo). se o Safari
-        do aparelho nao reconhecer, a casca encolhe para a altura do
-        conteudo e a barra fica parada no meio da tela.
-     2. NAO acrescentar height: nem 100%, nem -webkit-fill-available, nem
-        valor vindo de visualViewport.height. em app instalado no iOS os
-        tres nascem MENORES que a tela: a casca encolhe, a barra sobe e
-        sobra uma faixa morta embaixo. os offsets sozinhos ja bastam. */
+     armadilha ja paga caro: NAO usar height:100% sozinho como fonte de
+     altura, nem -webkit-fill-available, nem valor lido de
+     visualViewport.height — os tres nascem menores que a tela em app
+     instalado. o que funciona e dvh, com 100% so como respaldo para quem
+     nao entender a unidade. */
   #screenApp{
-    position:fixed;
-    top:0; left:0; right:0; bottom:0;
+    height:100%;
     flex-direction:column;
     overflow:hidden;
+  }
+  @supports (height: 100dvh){
+    #screenApp{ height:100dvh; }
   }
   /* ===== aviso de tela deitada =====
      o iOS nao deixa um app web travar a orientacao: screen.orientation.lock
