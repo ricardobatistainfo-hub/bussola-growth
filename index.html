@@ -8,15 +8,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- tela cheia por baixo da barra de status: o fundo do app vai ate o topo,
-     atras da hora, do wifi e da bateria.
+     atras da hora, do wifi e da bateria. IDENTICO ao app Banca (mesmo valor,
+     mesma raiz travada em 100dvh, mesma casca fixed+inset:0, mesma barra
+     fixed) — o Banca roda isso no MESMO iPhone com o rodape no lugar certo.
 
-     ja falhou antes aqui, com a barra de menu nascendo longe do rodape ou
-     cortada. o que faltava nao era a meta, era ancorar a ALTURA DO
-     DOCUMENTO: os apps Banca e Vertice rodam black-translucent neste mesmo
-     iPhone e os dois fixam html/body em height:100dvh com overflow:hidden.
-     sem isso o documento fica solto (so min-height) e o iOS entrega uma
-     janela que nao corresponde a tela. ver "raiz travada" no CSS — NAO
-     mexer em um sem o outro. -->
+     se a barra ainda nascer alta depois disto: o iOS so relê o manifest e
+     recalcula a geometria da janela no momento em que o icone e criado, nao
+     a cada abertura. um icone criado quando o manifest ainda era invalido
+     (era data: URI antes deste commit) continua com a geometria antiga ate
+     ser apagado e recriado — isso nao e um ajuste de CSS, e como o iOS
+     funciona. -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
 
@@ -46,7 +47,10 @@
       media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <!-- mesma cor do background_color do manifest, para o sistema pintar a faixa
      da barra de status exatamente na cor em que o topo do app comeca -->
-<meta name="theme-color" content="#05060B">
+<!-- tem que ser IDENTICO a --ink no CSS. e essa igualdade que faz a faixa da
+     barra de status (pintada pelo sistema, nao pelo app) parecer parte do
+     app — qualquer diferenca, por menor que seja, vira uma linha visivel -->
+<meta name="theme-color" content="#090B12">
 <meta name="color-scheme" content="dark">
 <title>Growth</title>
 <link rel="manifest" href="manifest.json?v=3">
@@ -912,10 +916,13 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* folga do topo do conteudo. o app pinta por baixo da barra de status,
-     entao o conteudo comeca em y=0 e precisa descer o tamanho do recorte
-     sozinho: env(safe-area-inset-top) vale ~47px no iPhone com notch. os
-     28px sao o piso para Safari e aparelhos sem recorte. */
+  /* folga do topo do conteudo. com black-translucent o app pinta por baixo
+     da barra de status, entao o conteudo comeca em y=0 e precisa descer o
+     recorte inteiro sozinho: env(safe-area-inset-top) vale ~47px no iPhone
+     com notch. os 28px sao so o piso para Safari e aparelhos sem recorte.
+     NAO reduzir isto em app instalado — ja tentei (10px) achando que o
+     conteudo comecava abaixo da barra, e nao comeca: com translucent ele
+     comeca no topo real da tela, entao precisa do inset inteiro. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
     /* medidas do rodape, iguais as do Banca: altura da barra, recorte do
