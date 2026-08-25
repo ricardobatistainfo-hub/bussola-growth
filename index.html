@@ -19,6 +19,31 @@
      mexer em um sem o outro. -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
+
+<!-- splash por tamanho fisico de tela, copiado do app Vertice — que roda
+     black-translucent neste mesmo iPhone com o rodape no lugar.
+
+     nao e so estetica: a media query informa ao iOS a geometria exata do
+     aparelho na abertura. medido aqui com black-translucent e SEM elas, a
+     janela nascia 390x797 numa tela de 390x844 (o painel de diagnostico
+     mostrou "janela 390x797 / tela 390x844"), e os 47px que faltam ficam
+     fora da area pintavel — dai a barra de menu parecer alta.
+     o iOS so aplica a imagem que bate exatamente com device-width,
+     device-height e pixel-ratio; por isso uma por tamanho. -->
+<link rel="apple-touch-startup-image" href="splash/splash-1170x2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/splash-1179x2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/splash-1284x2778.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/splash-1290x2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/splash-1125x2436.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/splash-828x1792.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/splash-750x1334.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <!-- mesma cor do background_color do manifest, para o sistema pintar a faixa
      da barra de status exatamente na cor em que o topo do app comeca -->
 <meta name="theme-color" content="#05060B">
