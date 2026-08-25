@@ -3008,6 +3008,20 @@ function wireBottomNav(){
             'r' + Math.round(r.right), 'w' + Math.round(r.width)].join(' ');
   }
 
+  /* quanto o aparelho considera ser 100vh e 100dvh, em pixels de verdade.
+     em app instalado no iOS a janela informada nasce mais curta que a tela;
+     se alguma destas duas conhecer a altura inteira, e nela que a barra deve
+     se ancorar. */
+  function medirUnidade(valor){
+    const p = document.createElement('div');
+    p.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;'+
+      'top:0;left:0;width:1px;height:' + valor;
+    document.body.appendChild(p);
+    const h = Math.round(p.getBoundingClientRect().height);
+    p.remove();
+    return h;
+  }
+
   function relatorio(){
     const nav = document.getElementById('bottomNav');
     const casca = document.getElementById('screenApp');
@@ -3023,6 +3037,9 @@ function wireBottomNav(){
       'clientH   ' + document.documentElement.clientHeight,
       'visualVP  ' + (vv ? Math.round(vv.width) + 'x' + Math.round(vv.height) +
                       ' top' + Math.round(vv.offsetTop) + ' esc' + vv.scale.toFixed(2) : '-'),
+      // decisivo: se 100vh vier maior que innerHeight, existe uma medida que
+      // conhece a tela inteira e da para ancorar a barra nela
+      'vh/dvh    ' + medirUnidade('100vh') + ' / ' + medirUnidade('100dvh'),
       'safe area t' + sa[0] + ' r' + sa[1] + ' b' + sa[2] + ' l' + sa[3],
       'standalone ' + (window.matchMedia('(display-mode: standalone)').matches ||
                        window.navigator.standalone === true),
