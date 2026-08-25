@@ -2,17 +2,22 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- shrink-to-fit=no vem do app Vertice, que roda black-translucent neste
+     mesmo aparelho sem perder o rodape -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- "black" e nao "black-translucent" DE PROPOSITO. com black-translucent o
-     iOS poe o app em tela cheia por baixo da barra de status e, na abertura,
-     posiciona a janela no topo da tela mas informa a altura SEM a barra de
-     status: tudo que se ancora no rodape para ~47px antes do fim, e so
-     acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
-     barra de menu nascer longe do fundo. com black a janela ja nasce
-     coerente e nao existe o que corrigir depois. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<!-- tela cheia por baixo da barra de status: o fundo do app vai ate o topo,
+     atras da hora, do wifi e da bateria.
+
+     ja falhou antes aqui, com a barra de menu nascendo longe do rodape ou
+     cortada. o que faltava nao era a meta, era ancorar a ALTURA DO
+     DOCUMENTO: os apps Banca e Vertice rodam black-translucent neste mesmo
+     iPhone e os dois fixam html/body em height:100dvh com overflow:hidden.
+     sem isso o documento fica solto (so min-height) e o iOS entrega uma
+     janela que nao corresponde a tela. ver "raiz travada" no CSS — NAO
+     mexer em um sem o outro. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
 <!-- mesma cor do background_color do manifest, para o sistema pintar a faixa
      da barra de status exatamente na cor em que o topo do app comeca -->
@@ -54,14 +59,30 @@
     font:inherit;
   }
   html,body{margin:0;padding:0;}
+
+  /* ===== raiz travada na altura da tela =====
+     copiado dos apps Banca e Vertice, que rodam black-translucent neste
+     mesmo iPhone sem perder o rodape. e o fator que os dois tem e o Growth
+     nao tinha.
+
+     a diferenca esta em height contra min-height: com min-height o documento
+     fica solto, e em app instalado o iOS acaba entregando uma janela que nao
+     corresponde a tela — foi assim que a barra de menu nasceu longe do fim,
+     e depois cortada. com a altura fixa nao ha essa folga.
+
+     100dvh sob @supports, com height:100% como respaldo para quem nao
+     entender a unidade. overscroll-behavior:none tira o efeito elastico, que
+     estica a area visivel para alem do que o fundo cobre. */
+  html,body{ height:100%; overscroll-behavior:none; }
+  @supports (height: 100dvh){
+    html,body{ height:100dvh; }
+  }
+  /* so depois do login: quem rola e a area de conteudo. a tela de login
+     precisa continuar rolando em aparelho baixo. */
+  body.app-mode{ overflow:hidden; }
+
   body{
     background:
-      /* emenda com a barra de status. o app nao pinta atras do relogio (a
-         barra e opaca, para o rodape nao ser cortado — ver a meta
-         status-bar-style), entao quem pinta aquela faixa e o sistema, com a
-         cor do manifest: #05060B. o topo do app nasce nessa mesma cor e
-         desmancha no fundo normal em 96px, e a linha entre os dois some. */
-      linear-gradient(to bottom, #05060B 0, rgba(5,6,11,0) 96px),
       radial-gradient(circle at 15% 0%, rgba(77,212,255,0.08), transparent 40%),
       radial-gradient(circle at 85% 20%, rgba(185,140,255,0.08), transparent 45%),
       var(--ink);
@@ -877,18 +898,12 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* folga do topo do conteudo.
-     no Safari sao 28px, que descolam o texto da barra de enderecos.
-     em app instalado a barra de status agora e opaca (ver a meta
-     apple-mobile-web-app-status-bar-style no <head>), entao o conteudo ja
-     comeca ABAIXO dela e env(safe-area-inset-top) vale 0 — 28px ali seria
-     folga sobre folga e empurraria a saudacao para baixo. 10px devolve o
-     espacamento que a tela tinha quando o app era translucido. */
+  /* folga do topo do conteudo. o app pinta por baixo da barra de status,
+     entao o conteudo comeca em y=0 e precisa descer o tamanho do recorte
+     sozinho: env(safe-area-inset-top) vale ~47px no iPhone com notch. os
+     28px sao o piso para Safari e aparelhos sem recorte. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
-  }
-  @media (display-mode: standalone){
-    :root{ --safe-top: max(10px, env(safe-area-inset-top)); }
   }
 
   /* ===== casca do app =====
@@ -2798,10 +2813,15 @@ function traduzErroAuth(code){
 function showAuthScreen(){
   document.getElementById('screenAuth').style.display = 'flex';
   document.getElementById('screenApp').style.display = 'none';
+  // a tela de login precisa poder rolar em aparelho baixo
+  document.body.classList.remove('app-mode');
 }
 function showAppScreen(){
   document.getElementById('screenAuth').style.display = 'none';
   document.getElementById('screenApp').style.display = 'flex';
+  // trava a rolagem do documento: quem rola e a area de conteudo.
+  // ver "raiz travada" no CSS — e o que Banca e Vertice fazem.
+  document.body.classList.add('app-mode');
 }
 
 /* aqui existia um reassentarLayout() que escondia e reexibia a casca varias
