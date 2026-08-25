@@ -916,13 +916,15 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* folga do topo do conteudo. com black-translucent o app pinta por baixo
-     da barra de status, entao o conteudo comeca em y=0 e precisa descer o
-     recorte inteiro sozinho: env(safe-area-inset-top) vale ~47px no iPhone
-     com notch. os 28px sao so o piso para Safari e aparelhos sem recorte.
-     NAO reduzir isto em app instalado — ja tentei (10px) achando que o
-     conteudo comecava abaixo da barra, e nao comeca: com translucent ele
-     comeca no topo real da tela, entao precisa do inset inteiro. */
+  /* folga do topo do conteudo.
+     no Safari sao 28px, que descolam o texto da barra de enderecos, e ai a
+     formula com env(safe-area-inset-top) funciona normalmente.
+
+     em app instalado, confirmado no aparelho real (5 toques em GROWTH),
+     28px E O VALOR CERTO — nao 47px (ja tentado e revertido). e fixo, sem
+     depender de env(safe-area-inset-top): esse valor variou entre
+     instalacoes do MESMO codigo (47 numa, 0 noutra), entao usa-lo aqui e
+     imprevisivel. NAO trocar por env() nem por 47px de novo. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
     /* medidas do rodape, iguais as do Banca: altura da barra, recorte do
@@ -930,6 +932,9 @@
     --tabbar-h: 66px;
     --safe-b: env(safe-area-inset-bottom, 0px);
     --nav-space: calc(var(--tabbar-h) + var(--safe-b) + 44px);
+  }
+  @media (display-mode: standalone){
+    :root{ --safe-top: 28px; }
   }
 
   /* ===== casca do app: identica a .app-shell do Banca =====
