@@ -1596,11 +1596,18 @@
   .mini-cat-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
-    grid-template-rows:repeat(2, 1fr);
+    /* minmax(88px, 1fr) em vez de 1fr: cada linha cresce pra preencher o
+       espaco sobrando, mas NUNCA fica menor que 88px — e o suficiente para
+       o badge de 36px + padding do chip + label + percentual nao ficarem
+       espremidos. antes, com 1fr puro e min-height:0 no proprio grid, um
+       espaco vertical menor (por qualquer motivo — --safe-top maior, tela
+       baixa) comprimia a grade inteira e os icones pareciam menores mesmo
+       tendo tamanho fixo em px; agora, se faltar espaco, quem sobra e a
+       rolagem da .wrap, nao o tamanho dos cards. */
+    grid-template-rows:repeat(2, minmax(88px, 1fr));
     gap:10px;
     margin-top:16px;
     flex:1;
-    min-height:0;
   }
   .mini-cat-chip{
     position:relative;
