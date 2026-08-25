@@ -920,11 +920,13 @@
      no Safari sao 28px, que descolam o texto da barra de enderecos, e ai a
      formula com env(safe-area-inset-top) funciona normalmente.
 
-     em app instalado, confirmado no aparelho real (5 toques em GROWTH),
-     28px E O VALOR CERTO — nao 47px (ja tentado e revertido). e fixo, sem
-     depender de env(safe-area-inset-top): esse valor variou entre
-     instalacoes do MESMO codigo (47 numa, 0 noutra), entao usa-lo aqui e
-     imprevisivel. NAO trocar por env() nem por 47px de novo. */
+     em app instalado, 28px fixo colou "GROWTH" e o dia da semana debaixo do
+     relogio/camera — confirmado ao vivo no aparelho, nao so por numero de
+     painel. env(safe-area-inset-top) sozinho tambem nao serve: ja mediu 47
+     numa instalacao e 0 noutra, do MESMO codigo.
+     54px e um piso alto o bastante pra nunca colar (cobre notch tradicional
+     com folga), com env() como respaldo caso o aparelho tenha recorte maior
+     (Dynamic Island) e o relate corretamente. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
     /* medidas do rodape, iguais as do Banca: altura da barra, recorte do
@@ -934,7 +936,7 @@
     --nav-space: calc(var(--tabbar-h) + var(--safe-b) + 44px);
   }
   @media (display-mode: standalone){
-    :root{ --safe-top: 28px; }
+    :root{ --safe-top: max(54px, env(safe-area-inset-top)); }
   }
 
   /* ===== casca do app: identica a .app-shell do Banca =====
