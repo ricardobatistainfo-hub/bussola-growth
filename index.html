@@ -83,28 +83,16 @@
     appearance:none;
     font:inherit;
   }
-  html,body{margin:0;padding:0;}
-
-  /* ===== raiz travada na altura da tela =====
-     copiado dos apps Banca e Vertice, que rodam black-translucent neste
-     mesmo iPhone sem perder o rodape. e o fator que os dois tem e o Growth
-     nao tinha.
-
-     a diferenca esta em height contra min-height: com min-height o documento
-     fica solto, e em app instalado o iOS acaba entregando uma janela que nao
-     corresponde a tela — foi assim que a barra de menu nasceu longe do fim,
-     e depois cortada. com a altura fixa nao ha essa folga.
-
-     100dvh sob @supports, com height:100% como respaldo para quem nao
-     entender a unidade. overscroll-behavior:none tira o efeito elastico, que
-     estica a area visivel para alem do que o fundo cobre. */
-  html,body{ height:100%; overscroll-behavior:none; }
-  @supports (height: 100dvh){
-    html,body{ height:100dvh; }
-  }
-  /* so depois do login: quem rola e a area de conteudo. a tela de login
-     precisa continuar rolando em aparelho baixo. */
-  body.app-mode{ overflow:hidden; }
+  /* ===== raiz: copiado literalmente do app Banca =====
+     o Banca roda black-translucent neste mesmo iPhone com o rodape no lugar,
+     e nao tem uma linha de JavaScript para isso — e tudo daqui.
+     repare que a altura vai SO no body.app-mode, nunca no html: era uma das
+     diferencas que eu tinha introduzido por conta propria. */
+  html,body{margin:0;padding:0;overflow-x:hidden;max-width:100vw;touch-action:pan-y;}
+  /* modo app (so depois do login): a pagina em si nao rola — quem rola e a
+     area de conteudo, o que mantem a barra inferior firme no lugar. a tela de
+     login fica de fora porque precisa rolar em aparelho baixo. */
+  body.app-mode{height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;}
 
   body{
     background:
@@ -821,12 +809,13 @@
 
   /* banner de instalacao, no mesmo estilo visual do app */
   .install-banner{
-    /* em fluxo, logo acima da barra de menu (order garante a ordem mesmo
-       vindo depois no HTML). antes era fixed com z-index alto e cobria a
-       barra inteira quando aparecia */
-    order:1;
-    flex-shrink:0;
-    width:calc(100% - 28px);
+    /* fixo logo acima da barra, na mesma conta do Banca: altura da barra +
+       recorte do indicador de home + 20px. z-index abaixo do dela (30). */
+    position:fixed;
+    left:14px; right:14px;
+    bottom:calc(var(--tabbar-h) + var(--safe-b) + 20px);
+    z-index:20;
+    width:auto;
     max-width:460px;
     margin:0 auto 10px;
     display:flex;
@@ -929,35 +918,21 @@
      28px sao o piso para Safari e aparelhos sem recorte. */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
+    /* medidas do rodape, iguais as do Banca: altura da barra, recorte do
+       indicador de home, e a reserva do conteudo = barra + recorte + 44px */
+    --tabbar-h: 66px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --nav-space: calc(var(--tabbar-h) + var(--safe-b) + 44px);
   }
 
-  /* ===== casca do app =====
-     em FLUXO NORMAL com height:100dvh, igual ao #root do app Vertice. nao
-     usar position:fixed aqui.
+  /* ===== casca do app: identica a .app-shell do Banca =====
+     position:fixed com inset:0, dentro de um body travado em 100dvh. e a
+     combinacao exata do Banca, que roda black-translucent neste iPhone com
+     o rodape no lugar. as variacoes que tentei por conta propria (fluxo com
+     dvh, quatro offsets no lugar do inset, altura medida por JS) todas
+     falharam — esta e a que ja se provou em uso. */
+  #screenApp{position:fixed;inset:0;z-index:1;flex-direction:column;}
 
-     a diferenca importa por causa de onde cada um busca a altura: um
-     elemento fixo se ancora no viewport de LAYOUT, e em app instalado com
-     black-translucent esse viewport nasce ~50px mais curto que a tela — a
-     casca encolhia junto e a barra de menu subia. dvh conhece a tela toda.
-     foi a ultima peca: a meta e a raiz travada ja estavam certas, faltava
-     tirar o fixed daqui.
-
-     a barra de menu e o ultimo filho desta coluna, entao encosta no fim da
-     casca por construcao, sem precisar calcular posicao.
-
-     armadilha ja paga caro: NAO usar height:100% sozinho como fonte de
-     altura, nem -webkit-fill-available, nem valor lido de
-     visualViewport.height — os tres nascem menores que a tela em app
-     instalado. o que funciona e dvh, com 100% so como respaldo para quem
-     nao entender a unidade. */
-  #screenApp{
-    height:100%;
-    flex-direction:column;
-    overflow:hidden;
-  }
-  @supports (height: 100dvh){
-    #screenApp{ height:100dvh; }
-  }
   /* ===== aviso de tela deitada =====
      o iOS nao deixa um app web travar a orientacao: screen.orientation.lock
      nao existe no Safari e o orientation do manifest e ignorado em app
@@ -1013,7 +988,9 @@
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
-    padding-bottom:8px !important;
+    /* a barra flutua fixa por cima: o conteudo reserva o espaco dela, senao
+       o ultimo item termina por baixo. mesma conta do Banca. */
+    padding-bottom:var(--nav-space) !important;
   }
 
   /* ---- navegacao por 5 telas (estilo app nativo) ---- */
@@ -1338,15 +1315,19 @@
      uma altura de janela que o iOS ainda nao sabe no primeiro desenho.
      a folga do rodape vem de margin-bottom, e a flutuacao das margens
      laterais + cantos arredondados. */
+  /* ancoragem identica a .tabbar do Banca: fixa no rodape da JANELA, com
+     altura propria, e nao filho estatico da casca. assim a posicao dela nao
+     depende de onde a casca termina. */
   .bottom-nav.nav5{
-    position:static;
-    order:2; /* sempre por ultimo, mesmo com o banner de instalacao presente */
-    flex-shrink:0;
-    width:calc(100% - 28px);
-    max-width:612px;
-    /* em app instalado para logo acima do indicador de home (env=34px);
-       no Safari, uma folga minima de 10px */
-    margin:0 auto max(10px, env(safe-area-inset-bottom));
+    position:fixed;
+    left:12px; right:12px;
+    bottom:max(10px, var(--safe-b));
+    z-index:30;
+    width:auto;
+    max-width:520px;
+    margin:0 auto;
+    height:var(--tabbar-h);
+    align-items:center;
     transform:none;
     justify-content:space-between;
     gap:0;
