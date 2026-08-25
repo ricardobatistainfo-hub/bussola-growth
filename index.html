@@ -1318,6 +1318,22 @@
     padding:6px;
     box-shadow:0 14px 34px -14px rgba(0,0,0,0.85);
   }
+  /* ===== ancoragem em app instalado =====
+     em app instalado no iOS a janela informada nasce mais curta que a tela
+     (a altura da barra de status), e um bottom: se ancora nessa janela curta
+     — e por isso que a barra ficava longe do fim mesmo com as medidas do
+     Banca. 100vh se refere ao viewport GRANDE, que conhece a tela inteira,
+     entao ancorar pelo topo com ele poe a barra onde ela tem que estar.
+
+     restrito a display-mode:standalone de proposito: no Safari 100vh e maior
+     que a area visivel (fica por baixo da barra do navegador), e la o bottom:
+     e que esta certo. nada visual muda aqui, so o ponto de ancoragem. */
+  @media (display-mode: standalone){
+    .bottom-nav.nav5{
+      top:calc(100vh - var(--tabbar-h) - max(10px, var(--safe-b)));
+      bottom:auto;
+    }
+  }
   .bottom-nav.nav5 button{
     flex:1;
     padding:8px 2px;
