@@ -2543,6 +2543,7 @@ function showScreen(id){
   // focado (sem um blur "limpo" disparar antes) — ver a cura do viewport
   // mais abaixo no arquivo. so mexe em algo se houver folga de verdade.
   if(window.__curarViewport) setTimeout(window.__curarViewport, 140);
+  if(window.__autodiagnostico) setTimeout(window.__autodiagnostico, 200);
 }
 
 function renderScreenAtual(){
@@ -2880,6 +2881,55 @@ function showAppScreen(){
     setTimeout(curarViewport, 140); // o WebKit demora um pouco a "assentar"
   }, true);
 })();
+
+/* ---------- autodiagnostico: aparece sozinho quando a barra esta errada ----------
+   temporario, so para achar a causa real. em vez de depender do gesto de
+   5 toques (que exige pedir pro usuario repetir o teste toda vez), o app
+   mede a posicao da barra a cada troca de tela e, se a folga do rodape
+   estiver fora do esperado, desenha os numeros na propria tela — sozinho,
+   sem nenhuma acao extra. se estiver tudo certo, nao aparece nada. */
+window.__autodiagnostico = function(){
+  const nav = document.getElementById('bottomNav');
+  if(!nav || getComputedStyle(nav).display === 'none') return;
+  const r = nav.getBoundingClientRect();
+  const folgaReal = Math.round(window.innerHeight - r.bottom);
+  // o esperado e max(10px, env(safe-area-inset-bottom)) — sem soltar CSS,
+  // le o padding de uma sonda com a mesma env() para saber o piso real
+  const sonda = document.createElement('div');
+  sonda.style.cssText = 'position:absolute;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)';
+  document.body.appendChild(sonda);
+  const safeB = Math.round(parseFloat(getComputedStyle(sonda).paddingBottom) || 0);
+  sonda.remove();
+  const folgaEsperada = Math.max(10, safeB);
+
+  const painel = document.getElementById('autodiagPainel');
+  // 20px de tolerancia: o valor real oscila um pouco por causa da barra
+  // de enderecos do Safari, nao e o bug que buscamos
+  if(Math.abs(folgaReal - folgaEsperada) <= 20){
+    if(painel) painel.remove();
+    return;
+  }
+  const vv = window.visualViewport;
+  const texto = [
+    'BARRA FORA DO LUGAR — folga ' + folgaReal + 'px (esperado ~' + folgaEsperada + 'px)',
+    'tela: ' + screen.width + 'x' + screen.height + '  janela: ' + window.innerWidth + 'x' + window.innerHeight,
+    'visualViewport: ' + (vv ? Math.round(vv.width) + 'x' + Math.round(vv.height) : '-'),
+    'tela atual: ' + currentScreen + '  standalone: ' +
+      (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true),
+  ].join('\n');
+  if(painel){
+    painel.textContent = texto;
+    return;
+  }
+  const novo = document.createElement('div');
+  novo.id = 'autodiagPainel';
+  novo.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99999;'+
+    'background:rgba(0,0,0,0.94);color:#ff8a5c;font:11px/1.5 monospace;'+
+    'padding:10px;border-radius:10px;white-space:pre-wrap;border:1px solid #ff8a5c;'+
+    'pointer-events:none';
+  novo.textContent = texto;
+  document.body.appendChild(novo);
+};
 
 document.getElementById('authSwitchBtn').addEventListener('click', (e)=>{
   e.preventDefault();
