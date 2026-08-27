@@ -12,7 +12,13 @@
      acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
      barra de menu nascer longe do fundo. com black a janela ja nasce
      coerente e nao existe o que corrigir depois. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<!-- passo 2, isolado: com a cura do viewport preso (ver o script logo apos
+     showAppScreen/showAuthScreen) ja em vigor e confirmada sem quebrar a
+     barra, black-translucent volta para o fundo ir ate atras do relogio.
+     se a barra nascer alta de novo, o proximo suspeito e outro gatilho do
+     mesmo bug de teclado que a cura ainda nao cobre — nao um novo problema
+     de CSS. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
 <meta name="theme-color" content="#161A23">
 <meta name="color-scheme" content="dark">
@@ -869,18 +875,21 @@
   }
   .bottom-nav button .nav-icon{font-size:17px;line-height:1;}
   .bottom-nav button.active{background:var(--gold);color:var(--ink);}
-  /* folga do topo do conteudo.
-     no Safari sao 28px, que descolam o texto da barra de enderecos.
-     em app instalado a barra de status agora e opaca (ver a meta
-     apple-mobile-web-app-status-bar-style no <head>), entao o conteudo ja
-     comeca ABAIXO dela e env(safe-area-inset-top) vale 0 — 28px ali seria
-     folga sobre folga e empurraria a saudacao para baixo. 10px devolve o
-     espacamento que a tela tinha quando o app era translucido. */
+  /* folga do topo do conteudo. com black-translucent (ver a meta no <head>)
+     o app pinta por baixo da barra de status: o conteudo comeca em y=0 e
+     precisa descer o recorte inteiro sozinho, nao so um respiro pequeno.
+     JA CAIU NESSE BUG ANTES: um piso baixo aqui (10px, ou mesmo 28px puro)
+     colou "GROWTH" e o dia da semana debaixo do relogio/camera. 54px e alto
+     o bastante para nunca colar, com env(safe-area-inset-top) como respaldo
+     via max() para recorte maior (Dynamic Island) se o sistema relatar
+     certo — sem depender SO dele, que ja se mostrou instavel neste
+     aparelho (fonte: bug documentado do WebKit em PWA standalone, ver o
+     comentario da cura do viewport mais abaixo). */
   :root{
     --safe-top: max(28px, env(safe-area-inset-top));
   }
   @media (display-mode: standalone){
-    :root{ --safe-top: max(10px, env(safe-area-inset-top)); }
+    :root{ --safe-top: max(54px, env(safe-area-inset-top)); }
   }
 
   /* ===== casca do app =====
