@@ -2814,13 +2814,52 @@ function showAppScreen(){
   document.getElementById('screenApp').style.display = 'flex';
 }
 
-/* aqui existia um reassentarLayout() que escondia e reexibia a casca varias
-   vezes na abertura, para simular a rotacao de tela que era o unico jeito de
-   consertar a altura. saiu por dois motivos: a causa foi resolvida na raiz
-   (a barra de status opaca — ver a meta no <head>), e o vai-e-vem do display
-   aparecia como uma tremida na tela. nao reintroduzir: se a altura voltar a
-   nascer errada, o problema esta na janela que o iOS informa, nao no momento
-   em que o layout e calculado. */
+/* ---------- cura o viewport preso depois do teclado ----------
+   bug documentado do WebKit em PWA instalado no iOS: quando um campo de
+   texto ganha foco (abre o teclado), window.innerHeight encolhe — e as
+   vezes NAO VOLTA depois que o teclado fecha, ficando preso no tamanho
+   encolhido pelo resto da sessao. e o motivo mais provavel da barra de
+   menu parecer "alta": a pessoa digita email/senha no login (ou o apelido,
+   logo depois), o teclado abre e fecha, e o viewport fica menor que a tela
+   de verdade dali em diante.
+   fonte: https://dev.to/cederhook/fixing-the-ios-standalone-pwa-keyboard-bug-that-shrinks-your-viewport-for-good-63d
+
+   a diferenca para o reassentarLayout() que existia aqui antes (removido
+   por causar tremida): aquele disparava em timers fixos na abertura,
+   sempre, existisse problema ou nao. este so dispara no BLUR de um campo
+   de texto — que e quando o bug documentado realmente acontece — e so se
+   o innerHeight atual estiver de fato menor que o maior ja visto nesta
+   sessao. na maioria das aberturas (sem digitar nada, ou quando o WebKit
+   nao trava) ele nunca dispara, entao nao ha vai-e-vem de display para
+   tremer. */
+(function(){
+  let maiorAltura = window.innerHeight;
+  window.addEventListener('resize', ()=>{
+    maiorAltura = Math.max(maiorAltura, window.innerHeight);
+  });
+
+  function curarViewport(){
+    // 4px de folga: o valor exato as vezes oscila por causa da barra de
+    // enderecos do Safari aparecendo/sumindo, que nao e o bug que buscamos
+    if(maiorAltura - window.innerHeight <= 4) return;
+    const casca = document.getElementById('screenApp');
+    if(!casca || casca.style.display === 'none') return;
+    const area = document.querySelector('#screenApp > .wrap');
+    const rolagem = area ? area.scrollTop : 0;
+    casca.style.display = 'none';
+    void casca.offsetHeight; // forca o reflow sincrono que "acorda" o WebKit
+    casca.style.display = 'flex';
+    if(area) area.scrollTop = rolagem;
+  }
+
+  // so em campo de texto/senha/email, nao em select ou botao — e so eles
+  // que abrem o teclado que dispara o bug
+  document.addEventListener('blur', (e)=>{
+    const el = e.target;
+    if(!el || !el.matches || !el.matches('input, textarea')) return;
+    setTimeout(curarViewport, 140); // o WebKit demora um pouco a "assentar"
+  }, true);
+})();
 
 document.getElementById('authSwitchBtn').addEventListener('click', (e)=>{
   e.preventDefault();
