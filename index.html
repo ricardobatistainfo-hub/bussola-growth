@@ -2539,6 +2539,10 @@ function showScreen(id){
   const area = document.querySelector('.wrap');
   if(area) area.scrollTop = 0;
   renderScreenAtual();
+  // rede de seguranca: cobre o caso de trocar de aba com um campo ainda
+  // focado (sem um blur "limpo" disparar antes) — ver a cura do viewport
+  // mais abaixo no arquivo. so mexe em algo se houver folga de verdade.
+  if(window.__curarViewport) setTimeout(window.__curarViewport, 140);
 }
 
 function renderScreenAtual(){
@@ -2840,7 +2844,12 @@ function showAppScreen(){
    o innerHeight atual estiver de fato menor que o maior ja visto nesta
    sessao. na maioria das aberturas (sem digitar nada, ou quando o WebKit
    nao trava) ele nunca dispara, entao nao ha vai-e-vem de display para
-   tremer. */
+   tremer.
+
+   PRIMEIRA TENTATIVA SO COBRIA input/textarea, e a barra ainda nasceu alta
+   na tela Diario — que tem varios <select> (o dropdown de prioridade). o
+   <select> no iOS tambem abre um seletor nativo por baixo da tela, mesma
+   familia de "teclado" que dispara o bug; entrou no seletor abaixo. */
 (function(){
   let maiorAltura = window.innerHeight;
   window.addEventListener('resize', ()=>{
@@ -2860,12 +2869,14 @@ function showAppScreen(){
     casca.style.display = 'flex';
     if(area) area.scrollTop = rolagem;
   }
+  window.__curarViewport = curarViewport; // rede de seguranca extra: ver showScreen()
 
-  // so em campo de texto/senha/email, nao em select ou botao — e so eles
-  // que abrem o teclado que dispara o bug
+  // texto, senha, email e select — todos abrem algum tipo de seletor nativo
+  // do iOS (teclado ou picker) que pode disparar o bug. nao em botao, que
+  // nao abre nada disso.
   document.addEventListener('blur', (e)=>{
     const el = e.target;
-    if(!el || !el.matches || !el.matches('input, textarea')) return;
+    if(!el || !el.matches || !el.matches('input, textarea, select')) return;
     setTimeout(curarViewport, 140); // o WebKit demora um pouco a "assentar"
   }, true);
 })();
