@@ -2854,26 +2854,51 @@ function showAppScreen(){
    so depois de fechar. escutar blur so reage DEPOIS que o campo perde o
    foco — tarde demais se o problema comeca no focus.
 
-   por isso a base agora nao e mais "adivinhar qual elemento dispara o
-   bug" — e ouvir visualViewport.resize diretamente: o evento que o
-   proprio WebKit dispara toda vez que a area visivel muda de tamanho,
-   seja por que motivo for (teclado abrindo, fechando, o que for). com
-   debounce de 300ms para so agir depois que o valor parar de mudar (nao
-   no meio da animacao do teclado). */
+   por isso a base agora nao e "adivinhar qual elemento dispara o bug" —
+   e ouvir visualViewport.resize diretamente: o evento que o proprio
+   WebKit dispara toda vez que a area visivel muda de tamanho, por
+   qualquer motivo (teclado abrindo, fechando, o que for).
+
+   ERRO DA VERSAO ANTERIOR: ela tentava curar assim que o valor parasse de
+   mudar por 300ms — mas ENQUANTO O TECLADO ESTA ABERTO, a altura menor e
+   CORRETA (o teclado ocupa espaco de verdade), nao um bug. curar nesse
+   momento nao resolve nada, porque nao ha nada de errado ainda para
+   corrigir — so ha algo errado DEPOIS que o teclado fecha e a altura NAO
+   volta. por isso agora so tenta curar quando document.activeElement nao
+   e mais um campo — se ainda for, guarda que precisa tentar de novo no
+   proximo blur.
+
+   tambem cobre a abertura do app: se o bug ja tinha acontecido numa
+   sessao anterior que o iOS manteve viva em segundo plano, reabrir nao e
+   um "primeiro load" de verdade, e a barra pode nascer errada sem
+   nenhuma interacao nova — ver reassentarNaAbertura() mais abaixo. */
 (function(){
   let maiorAltura = window.innerHeight;
   let curando = false; // trava contra reentrada: o proprio toggle nao deve disparar a si mesmo
+  let pendente = false; // ficou sabendo que precisa curar, mas o teclado ainda estava aberto
   window.addEventListener('resize', ()=>{
     maiorAltura = Math.max(maiorAltura, window.innerHeight);
   });
+
+  function campoAtivo(){
+    const el = document.activeElement;
+    return !!(el && el.matches && el.matches('input, textarea, select'));
+  }
 
   function curarViewport(){
     if(curando) return;
     // 4px de folga: o valor exato as vezes oscila por causa da barra de
     // enderecos do Safari aparecendo/sumindo, que nao e o bug que buscamos
-    if(maiorAltura - window.innerHeight <= 4) return;
+    if(maiorAltura - window.innerHeight <= 4){ pendente = false; return; }
+    if(campoAtivo()){
+      // o teclado ainda esta aberto: a altura menor e legitima agora, nao
+      // um bug. guarda o pedido para tentar de novo quando ele fechar.
+      pendente = true;
+      return;
+    }
     const casca = document.getElementById('screenApp');
     if(!casca || casca.style.display === 'none') return;
+    pendente = false;
     curando = true;
     const area = document.querySelector('#screenApp > .wrap');
     const rolagem = area ? area.scrollTop : 0;
@@ -2895,13 +2920,28 @@ function showAppScreen(){
     });
   }
 
-  // blur continua como segunda camada, mais rapida quando se aplica
-  // (texto, senha, email, select — que abrem algum seletor nativo do iOS)
+  // blur: quando um campo perde o foco, tenta curar de novo — e o unico
+  // jeito de atender o pedido "pendente" de quando o teclado ainda estava
+  // aberto, alem de continuar servindo como segunda camada mais rapida.
   document.addEventListener('blur', (e)=>{
     const el = e.target;
     if(!el || !el.matches || !el.matches('input, textarea, select')) return;
     setTimeout(curarViewport, 140); // o WebKit demora um pouco a "assentar"
   }, true);
+
+  // abertura do app: se o bug ja estava presente de uma sessao anterior
+  // que o iOS manteve viva (o app nao fez um "primeiro load" de verdade),
+  // a barra pode nascer errada sem nenhuma interacao nova. tenta curar
+  // (a funcao mesma decide se ha algo a fazer) tanto no primeiro desenho
+  // quanto ao voltar de segundo plano.
+  function reassentarNaAbertura(){
+    requestAnimationFrame(()=> requestAnimationFrame(curarViewport));
+    [300, 800].forEach(ms=> setTimeout(curarViewport, ms));
+  }
+  window.addEventListener('pageshow', reassentarNaAbertura);
+  document.addEventListener('visibilitychange', ()=>{
+    if(!document.hidden) reassentarNaAbertura();
+  });
 })();
 
 /* ---------- autodiagnostico: aparece sozinho quando a barra esta errada ----------
