@@ -2847,34 +2847,56 @@ function showAppScreen(){
    nao trava) ele nunca dispara, entao nao ha vai-e-vem de display para
    tremer.
 
-   PRIMEIRA TENTATIVA SO COBRIA input/textarea, e a barra ainda nasceu alta
-   na tela Diario — que tem varios <select> (o dropdown de prioridade). o
-   <select> no iOS tambem abre um seletor nativo por baixo da tela, mesma
-   familia de "teclado" que dispara o bug; entrou no seletor abaixo. */
+   PRIMEIRA TENTATIVA SO COBRIA input/textarea, depois so; select tambem.
+   nenhuma das duas resolveu. o usuario confirmou o padrao real: girar a
+   tela consertava (a assinatura classica do bug — o WebKit so recalcula a
+   geometria direito numa rotacao), e a barra subia AO ABRIR o teclado, nao
+   so depois de fechar. escutar blur so reage DEPOIS que o campo perde o
+   foco — tarde demais se o problema comeca no focus.
+
+   por isso a base agora nao e mais "adivinhar qual elemento dispara o
+   bug" — e ouvir visualViewport.resize diretamente: o evento que o
+   proprio WebKit dispara toda vez que a area visivel muda de tamanho,
+   seja por que motivo for (teclado abrindo, fechando, o que for). com
+   debounce de 300ms para so agir depois que o valor parar de mudar (nao
+   no meio da animacao do teclado). */
 (function(){
   let maiorAltura = window.innerHeight;
+  let curando = false; // trava contra reentrada: o proprio toggle nao deve disparar a si mesmo
   window.addEventListener('resize', ()=>{
     maiorAltura = Math.max(maiorAltura, window.innerHeight);
   });
 
   function curarViewport(){
+    if(curando) return;
     // 4px de folga: o valor exato as vezes oscila por causa da barra de
     // enderecos do Safari aparecendo/sumindo, que nao e o bug que buscamos
     if(maiorAltura - window.innerHeight <= 4) return;
     const casca = document.getElementById('screenApp');
     if(!casca || casca.style.display === 'none') return;
+    curando = true;
     const area = document.querySelector('#screenApp > .wrap');
     const rolagem = area ? area.scrollTop : 0;
     casca.style.display = 'none';
     void casca.offsetHeight; // forca o reflow sincrono que "acorda" o WebKit
     casca.style.display = 'flex';
     if(area) area.scrollTop = rolagem;
+    curando = false;
   }
   window.__curarViewport = curarViewport; // rede de seguranca extra: ver showScreen()
 
-  // texto, senha, email e select — todos abrem algum tipo de seletor nativo
-  // do iOS (teclado ou picker) que pode disparar o bug. nao em botao, que
-  // nao abre nada disso.
+  // mecanismo principal: reage ao viewport mudando de tamanho de verdade,
+  // por qualquer motivo, em vez de tentar prever qual elemento dispara.
+  let debounceVV;
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', ()=>{
+      clearTimeout(debounceVV);
+      debounceVV = setTimeout(curarViewport, 300);
+    });
+  }
+
+  // blur continua como segunda camada, mais rapida quando se aplica
+  // (texto, senha, email, select — que abrem algum seletor nativo do iOS)
   document.addEventListener('blur', (e)=>{
     const el = e.target;
     if(!el || !el.matches || !el.matches('input, textarea, select')) return;
