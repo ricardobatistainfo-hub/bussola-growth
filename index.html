@@ -2897,6 +2897,23 @@ function showAppScreen(){
     return !!(el && el.matches && el.matches('input, textarea, select'));
   }
 
+  // ultimo recurso, so quando o reflow simples nao resolveu de verdade.
+  // pesquisado: nao ha API documentada para forcar o WebKit a recalcular a
+  // safe-area/altura da janela sem uma rotacao real — nenhum truque de JS
+  // "engana" esse calculo, que acontece num nivel abaixo da pagina. um
+  // location.reload() reinicia TODO o processo de carregamento, que e o
+  // mais parecido com o que uma rotacao forca (reavaliacao completa, nao
+  // so o layout interno). maximo 1 vez por sessao do app, guardado em
+  // sessionStorage — senao, se o reload nao resolver, entraria em loop.
+  function tentarReloadUmaVez(){
+    try{
+      if(sessionStorage.getItem('jaTentouReloadViewport')) return false;
+      sessionStorage.setItem('jaTentouReloadViewport', '1');
+    }catch(e){ return false; } // modo privado pode bloquear sessionStorage
+    location.reload();
+    return true;
+  }
+
   function curarViewport(){
     if(curando) return;
     // 6px de folga: o valor exato as vezes oscila por causa da barra de
@@ -2919,6 +2936,10 @@ function showAppScreen(){
     casca.style.display = 'flex';
     if(area) area.scrollTop = rolagem;
     curando = false;
+    // medido no aparelho real: este reflow NAO corrige o bug de janela
+    // menor que a tela na abertura (so uma rotacao real corrige). se
+    // continuar errado depois da tentativa acima, tenta o reload.
+    if(alturaFaltando() > 6 && !campoAtivo()) tentarReloadUmaVez();
   }
   window.__curarViewport = curarViewport; // rede de seguranca extra: ver showScreen()
 
