@@ -2873,12 +2873,24 @@ function showAppScreen(){
    um "primeiro load" de verdade, e a barra pode nascer errada sem
    nenhuma interacao nova — ver reassentarNaAbertura() mais abaixo. */
 (function(){
-  let maiorAltura = window.innerHeight;
+  // ERRO DESTA BASE, ja corrigido: "maiorAltura" comecava como
+  // window.innerHeight do proprio load — se o bug ja estava presente
+  // desde o primeiro instante ("abre ja errada", confirmado pelo
+  // usuario), o script NUNCA via o valor correto para comparar, e a
+  // condicao de disparo nunca era verdadeira. a referencia agora e
+  // screen.height: a tela FISICA, que nao muda com bug nenhum e esta
+  // disponivel correta desde a primeira linha, sem depender de ter visto
+  // nada antes. so vale em retrato (em paisagem width/height trocam de
+  // papel na comparacao). */
   let curando = false; // trava contra reentrada: o proprio toggle nao deve disparar a si mesmo
   let pendente = false; // ficou sabendo que precisa curar, mas o teclado ainda estava aberto
-  window.addEventListener('resize', ()=>{
-    maiorAltura = Math.max(maiorAltura, window.innerHeight);
-  });
+
+  function alturaFaltando(){
+    if(window.innerWidth >= window.innerHeight) return 0; // paisagem: nao se aplica
+    const vv = window.visualViewport;
+    const janela = vv ? vv.height : window.innerHeight;
+    return Math.round(screen.height - janela);
+  }
 
   function campoAtivo(){
     const el = document.activeElement;
@@ -2887,9 +2899,9 @@ function showAppScreen(){
 
   function curarViewport(){
     if(curando) return;
-    // 4px de folga: o valor exato as vezes oscila por causa da barra de
+    // 6px de folga: o valor exato as vezes oscila por causa da barra de
     // enderecos do Safari aparecendo/sumindo, que nao e o bug que buscamos
-    if(maiorAltura - window.innerHeight <= 4){ pendente = false; return; }
+    if(alturaFaltando() <= 6){ pendente = false; return; }
     if(campoAtivo()){
       // o teclado ainda esta aberto: a altura menor e legitima agora, nao
       // um bug. guarda o pedido para tentar de novo quando ele fechar.
@@ -2946,38 +2958,47 @@ function showAppScreen(){
 
 /* ---------- autodiagnostico: aparece sozinho quando a barra esta errada ----------
    temporario, so para achar a causa real. em vez de depender do gesto de
-   5 toques (que exige pedir pro usuario repetir o teste toda vez), o app
-   mede a posicao da barra a cada troca de tela e, se a folga do rodape
-   estiver fora do esperado, desenha os numeros na propria tela — sozinho,
-   sem nenhuma acao extra. se estiver tudo certo, nao aparece nada. */
+   5 toques, o app mede a cada troca de tela e desenha os numeros na
+   propria tela sozinho, sem nenhuma acao extra, quando algo bate errado.
+
+   ERRO DA VERSAO ANTERIOR: comparava a barra so contra window.innerHeight
+   (folga = innerHeight - fim da barra). se a JANELA em si ja nasce menor
+   que a TELA real, a barra fica corretamente ancorada dentro dessa janela
+   errada — a folga calculada dava normal, e o aviso nunca disparava, por
+   mais que a barra estivesse visualmente longe do fim da tela FISICA.
+   confirmado: usuario reportou "ja abre errada" e nenhum aviso apareceu.
+
+   agora o criterio principal e outro: comparar screen.height (a tela
+   fisica, que nao muda com bug nenhum) contra window.innerHeight/
+   visualViewport.height (a janela, que e o valor sob suspeita). isso pega
+   o problema na raiz, independente de onde a barra tenha se ancorado. */
 window.__autodiagnostico = function(){
-  const nav = document.getElementById('bottomNav');
-  if(!nav || getComputedStyle(nav).display === 'none') return;
-  const r = nav.getBoundingClientRect();
-  const folgaReal = Math.round(window.innerHeight - r.bottom);
-  // o esperado e max(10px, env(safe-area-inset-bottom)) — sem soltar CSS,
-  // le o padding de uma sonda com a mesma env() para saber o piso real
-  const sonda = document.createElement('div');
-  sonda.style.cssText = 'position:absolute;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)';
-  document.body.appendChild(sonda);
-  const safeB = Math.round(parseFloat(getComputedStyle(sonda).paddingBottom) || 0);
-  sonda.remove();
-  const folgaEsperada = Math.max(10, safeB);
+  // so faz sentido em retrato: em paisagem width/height trocam de papel
+  if(window.innerWidth >= window.innerHeight) return;
+
+  const vv = window.visualViewport;
+  const alturaJanela = Math.round((vv ? vv.height : window.innerHeight));
+  const alturaTela = Math.round(screen.height);
+  const faltando = alturaTela - alturaJanela;
 
   const painel = document.getElementById('autodiagPainel');
-  // 20px de tolerancia: o valor real oscila um pouco por causa da barra
-  // de enderecos do Safari, nao e o bug que buscamos
-  if(Math.abs(folgaReal - folgaEsperada) <= 20){
+  // 25px de tolerancia: cobre a barra de enderecos do Safari indo e
+  // vindo, que nao e o bug que buscamos
+  if(faltando <= 25){
     if(painel) painel.remove();
     return;
   }
-  const vv = window.visualViewport;
+
+  const nav = document.getElementById('bottomNav');
+  const r = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect() : null;
   const texto = [
-    'BARRA FORA DO LUGAR — folga ' + folgaReal + 'px (esperado ~' + folgaEsperada + 'px)',
-    'tela: ' + screen.width + 'x' + screen.height + '  janela: ' + window.innerWidth + 'x' + window.innerHeight,
-    'visualViewport: ' + (vv ? Math.round(vv.width) + 'x' + Math.round(vv.height) : '-'),
+    'JANELA MENOR QUE A TELA — faltam ' + faltando + 'px',
+    'tela real: ' + screen.width + 'x' + alturaTela,
+    'innerHeight: ' + window.innerHeight + '  visualViewport: ' + (vv ? Math.round(vv.height) : '-'),
+    'barra: ' + (r ? 'fim em ' + Math.round(r.bottom) + ', folga ate innerHeight ' + Math.round(window.innerHeight - r.bottom) : 'nao visivel'),
     'tela atual: ' + currentScreen + '  standalone: ' +
       (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true),
+    'campo com foco: ' + (document.activeElement ? document.activeElement.tagName : '-'),
   ].join('\n');
   if(painel){
     painel.textContent = texto;
@@ -2992,6 +3013,9 @@ window.__autodiagnostico = function(){
   novo.textContent = texto;
   document.body.appendChild(novo);
 };
+// checagem periodica: nao depende so de troca de tela, para pegar o
+// problema mesmo que a pessoa fique parada na mesma tela depois do teclado
+setInterval(()=>{ if(window.__autodiagnostico) window.__autodiagnostico(); }, 2000);
 
 document.getElementById('authSwitchBtn').addEventListener('click', (e)=>{
   e.preventDefault();
