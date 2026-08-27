@@ -2902,13 +2902,21 @@ function showAppScreen(){
   // safe-area/altura da janela sem uma rotacao real — nenhum truque de JS
   // "engana" esse calculo, que acontece num nivel abaixo da pagina. um
   // location.reload() reinicia TODO o processo de carregamento, que e o
-  // mais parecido com o que uma rotacao forca (reavaliacao completa, nao
-  // so o layout interno). maximo 1 vez por sessao do app, guardado em
-  // sessionStorage — senao, se o reload nao resolver, entraria em loop.
+  // mais parecido com o que uma rotacao forca.
+  //
+  // CONFIRMADO NO APARELHO: o bug NAO acontece so uma vez na abertura — ele
+  // pode voltar depois, toda vez que o viewport muda de tamanho de novo
+  // (por exemplo ao fechar o teclado). uma trava de "1 vez por sessao"
+  // bloqueava reloads legitimos depois do primeiro. agora e um CONTADOR com
+  // teto de 5 tentativas na mesma sessao do app — generoso o bastante para
+  // varios gatilhos ao longo do uso normal, mas ainda finito, para nunca
+  // entrar em loop infinito se o reload realmente parar de ajudar.
+  const TETO_RELOAD = 5;
   function tentarReloadUmaVez(){
     try{
-      if(sessionStorage.getItem('jaTentouReloadViewport')) return false;
-      sessionStorage.setItem('jaTentouReloadViewport', '1');
+      const n = Number(sessionStorage.getItem('tentativasReloadViewport') || '0');
+      if(n >= TETO_RELOAD) return false;
+      sessionStorage.setItem('tentativasReloadViewport', String(n + 1));
     }catch(e){ return false; } // modo privado pode bloquear sessionStorage
     location.reload();
     return true;
