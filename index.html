@@ -12,7 +12,7 @@
      acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
      barra de menu nascer longe do fundo. com black a janela ja nasce
      coerente e nao existe o que corrigir depois. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
 <meta name="theme-color" content="#161A23">
 <meta name="color-scheme" content="dark">
@@ -1305,7 +1305,27 @@
     border-radius:22px;
     padding:6px;
     box-shadow:0 14px 34px -14px rgba(0,0,0,0.85);
+    transition:transform .22s cubic-bezier(.22,1,.36,1);
+    will-change:transform;
   }
+  /* Com o teclado aberto a barra sai de cena.
+     ----------------------------------------------------------------
+     Esta e a peca que o Banca sempre teve e este app nunca teve, e e o que
+     permite usar black-translucent sem a barra subir. A barra e o ultimo
+     filho da casca, entao ela para onde a casca termina -- e a casca
+     termina onde o iOS DIZ que a janela acaba. Com translucent o iOS erra
+     esse numero quando o teclado abre (encolhe e, ao fechar, nao devolve),
+     e a barra sobe junto ate uma rotacao consertar.
+
+     Nao adianta tentar consertar a altura por JavaScript: este arquivo ja
+     teve reflow forcado, depois reload, depois ate cinco reloads por
+     sessao, e nada resolveu -- so piorou ("a tela mudando varias vezes").
+     O que funciona e nao ter nada ancorado no rodape enquanto a janela
+     esta com a altura errada.
+
+     220% (o Banca usa 160%) porque aqui a barra ainda soma a propria
+     margin-bottom da area segura antes de sair da casca. */
+  body.kb-open .bottom-nav.nav5{transform:translateY(220%);}
   .bottom-nav.nav5 button{
     flex:1;
     padding:8px 2px;
@@ -3181,6 +3201,39 @@ applyFullI18n();
 renderDayHero();
 wireInstallBanner();
 wireBottomNav();
+
+/* ---------- barra fora de cena enquanto o teclado esta aberto ----------
+   Copiado do Banca, com as duas armadilhas que ele ja pagou pra aprender:
+
+   1. CAPTURE, nao borbulhamento. focus/blur nao borbulham, e um campo pode
+      se destruir dentro do proprio blur (um handler que salva e re-renderiza
+      a lista); nesse caso o focusout nunca chega a sair de um elemento que
+      ja saiu da arvore, e a barra ficaria PRESA escondida.
+
+   2. Campo que abre SELETOR NATIVO fica de fora. <select> e os inputs de
+      data/hora abrem a roleta do proprio iOS, e mexer no layout nesse
+      instante faz o Safari fechar o seletor sozinho. */
+(function(){
+  const ABRE_SELETOR_NATIVO = 'select, input[type=date], input[type=time], input[type=month], input[type=week], input[type=datetime-local]';
+  function abreTeclado(el){
+    return !!(el && el.matches && el.matches('input, textarea') && !el.matches(ABRE_SELETOR_NATIVO));
+  }
+  document.addEventListener('focus', (e)=>{
+    if(abreTeclado(e.target)) document.body.classList.add('kb-open');
+  }, true);
+  document.addEventListener('blur', (e)=>{
+    if(abreTeclado(e.target)) document.body.classList.remove('kb-open');
+  }, true);
+  // rede de seguranca: voltando de segundo plano sem campo em foco, a barra
+  // tem que estar visivel — senao um blur perdido a deixaria sumida de vez
+  function sanearBarra(){
+    if(!document.hidden && !abreTeclado(document.activeElement)){
+      document.body.classList.remove('kb-open');
+    }
+  }
+  document.addEventListener('visibilitychange', sanearBarra);
+  window.addEventListener('pageshow', sanearBarra);
+})();
 
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible' && currentUser){
