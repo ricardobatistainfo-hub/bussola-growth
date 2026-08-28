@@ -12,7 +12,7 @@
      acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
      barra de menu nascer longe do fundo. com black a janela ja nasce
      coerente e nao existe o que corrigir depois. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Growth">
 <meta name="theme-color" content="#161A23">
 <meta name="color-scheme" content="dark">
@@ -900,9 +900,30 @@
         valor vindo de visualViewport.height. em app instalado no iOS os
         tres nascem MENORES que a tela: a casca encolhe, a barra sobe e
         sobra uma faixa morta embaixo. os offsets sozinhos ja bastam. */
+  /* A casca e dimensionada por ALTURA (100dvh), nao ancorada pelos quatro
+     offsets de um position:fixed. A diferenca so aparece com a status bar
+     translucida, e e exatamente o que separava este app do Vertice:
+
+       janela / 100dvh          844   <- a tela inteira
+       area de layout (fixed)   797   <- 47px a menos, = safe-area-inset-top
+
+     Com translucent o iOS informa a area de layout 47px MENOR que a tela.
+     Uma casca em position:fixed com bottom:0 herda esses 797, e a barra de
+     menu -- que e o ultimo filho dela -- nasce 47px acima do fim da tela.
+     Foi o sintoma reportado aqui: "barra de menu acima, mas se deito a tela
+     ele arruma" (a rotacao forca o iOS a recalcular).
+
+     100dvh pega a tela inteira e nao tem esse desconto. E como o Vertice
+     dimensiona a casca dele, e la o translucent funciona.
+
+     O position:fixed foi introduzido em 31261ce copiando o .app-shell do
+     Banca. Faz sentido no Banca, cuja barra e ELA MESMA position:fixed --
+     ancorada na janela, nao no fim da casca. Aqui a barra e position:static
+     dentro da casca, entao ela herda o erro da casca. */
   #screenApp{
-    position:fixed;
-    top:0; left:0; right:0; bottom:0;
+    position:relative;
+    height:100vh;
+    height:100dvh;
     flex-direction:column;
     overflow:hidden;
   }
