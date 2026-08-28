@@ -906,38 +906,9 @@
         valor vindo de visualViewport.height. em app instalado no iOS os
         tres nascem MENORES que a tela: a casca encolhe, a barra sobe e
         sobra uma faixa morta embaixo. os offsets sozinhos ja bastam. */
-  /* A casca desconta o erro da janela.
-     ----------------------------------------------------------------
-     Medido no aparelho, o MESMO app, com black-translucent, nos dois
-     estados (antes e depois de girar a tela):
-
-                     com erro        sem erro
-       tela            844             844
-       janela          797             844     <- innerHeight E visualViewport
-       clientH         797             797     <- igual nos dois: nao e ele
-       casca          h797            h844     <- segue a janela
-       fim da barra    763             810     <- 810 = 844-34, correto
-       folga da barra   34              34     <- "certa" na janela errada
-
-     Ou seja: na abertura o iOS informa a janela 47px menor que a tela, e
-     TUDO que se ancora nela herda o erro -- a casca, e a barra junto. A
-     folga da barra esta certa nos dois casos; o que esta errado e a janela.
-     Girar o aparelho forca o iOS a recalcular, e ai bate.
-
-     Nao ha CSS que corrija isso, porque nao ha o que corrigir no layout.
-     Mas da para COMPENSAR: a diferenca e mensuravel (screen.height menos
-     innerHeight) e --erro-janela a publica. Com bottom negativo a casca
-     estica para baixo exatamente o que falta:
-
-       com erro:  bottom -47  ->  casca de 0 a 797+47 = 844  -> barra em 810
-       sem erro:  bottom   0  ->  casca de 0 a 844           -> barra em 810
-
-     O mesmo lugar nos dois estados. overflow:hidden ja estava aqui e
-     continua contendo qualquer excedente. */
   #screenApp{
     position:fixed;
-    top:0; left:0; right:0;
-    bottom:calc(0px - var(--erro-janela, 0px));
+    top:0; left:0; right:0; bottom:0;
     flex-direction:column;
     overflow:hidden;
   }
@@ -3236,32 +3207,6 @@ applyFullI18n();
 renderDayHero();
 wireInstallBanner();
 wireBottomNav();
-
-/* ---------- mede o quanto a janela esta faltando ----------
-   screen.height e a tela FISICA e nao muda com bug nenhum -- por isso serve
-   de referencia. So vale em retrato: deitado, largura e altura trocam de
-   papel e a conta perde o sentido (e deitado o bug nem acontece, porque a
-   rotacao e justamente o que faz o iOS recalcular).
-
-   40px de piso: abaixo disso e oscilacao normal da barra de enderecos no
-   Safari comum, nao o bug da barra de status, que vale ~47px neste
-   aparelho. */
-(function(){
-  function medir(){
-    var retrato = window.innerHeight > window.innerWidth;
-    var erro = retrato ? Math.round(screen.height - window.innerHeight) : 0;
-    document.documentElement.style.setProperty('--erro-janela', (erro >= 40 ? erro : 0) + 'px');
-  }
-  medir();
-  // a rotacao e o momento em que o iOS costuma se corrigir; o atraso deixa
-  // ele assentar antes de remedirmos
-  function remedir(){ medir(); setTimeout(medir, 300); }
-  window.addEventListener('resize', remedir);
-  window.addEventListener('orientationchange', remedir);
-  window.addEventListener('pageshow', remedir);
-  document.addEventListener('visibilitychange', function(){ if(!document.hidden) remedir(); });
-  setTimeout(medir, 600); // a primeira abertura demora a assentar
-})();
 
 /* ---------- barra fora de cena enquanto o teclado esta aberto ----------
    Copiado do Banca, com as duas armadilhas que ele ja pagou pra aprender:
