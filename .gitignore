@@ -1,1 +1,7 @@
 *.png
+
+# ...menos os icones do PWA, que precisam existir de verdade no deploy:
+# o manifest aponta para eles, e um icone 404 quebra a instalacao no iOS.
+!icon-192.png
+!icon-512.png
+!icon-512-maskable.png
