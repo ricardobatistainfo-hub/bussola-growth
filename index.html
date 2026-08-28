@@ -961,7 +961,14 @@
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
-    padding-bottom:8px !important;
+    /* A barra de menu agora e position:fixed (fora do fluxo), entao o .wrap
+       ocupa a casca inteira e o conteudo passava POR BAIXO da barra. Aqui o
+       .wrap reserva o espaco dela de volta:
+         altura da barra (~65) + o bottom dela + uma folga.
+       O bottom da barra e "max(10px, env(safe-area-inset-bottom)) menos o
+       erro da janela" -- a mesma conta, para o conteudo parar exatamente na
+       borda de cima da barra nos dois estados (janela 797 e janela 844). */
+    padding-bottom:calc(65px + max(10px, env(safe-area-inset-bottom)) - var(--erro-janela, 0px) + 18px) !important;
   }
 
   /* ---- navegacao por 5 telas (estilo app nativo) ---- */
