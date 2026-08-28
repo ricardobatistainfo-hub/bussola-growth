@@ -51,7 +51,7 @@
     appearance:none;
     font:inherit;
   }
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;overflow-x:hidden;max-width:100vw;touch-action:pan-y;}
   body{
     background:
       radial-gradient(circle at 15% 0%, rgba(77,212,255,0.08), transparent 40%),
@@ -60,8 +60,8 @@
     color:var(--parchment);
     font-family:'Inter',sans-serif;
     min-height:100vh;
-    min-height:100dvh;
     -webkit-tap-highlight-color:transparent;
+    background-attachment:fixed;
   }
   .wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:28px 18px 80px;}
 
@@ -1286,15 +1286,27 @@
      uma altura de janela que o iOS ainda nao sabe no primeiro desenho.
      a folga do rodape vem de margin-bottom, e a flutuacao das margens
      laterais + cantos arredondados. */
+  /* A barra e position:fixed, ancorada ao VIEWPORT -- exatamente como a
+     .tabbar do Banca. Ela nao e mais o ultimo filho do #screenApp; a posicao
+     dela deixa de depender de onde a casca termina.
+
+     E o bottom desconta o erro que o iOS comete ao informar a janela na
+     abertura (medido no aparelho: janela 797, tela 844 -> --erro-janela: 47).
+     Sendo fixed no viewport (e nao dentro do overflow:hidden do #screenApp),
+     os pixels que passam do innerHeight nao sao cortados.
+
+       janela 797:  bottom = max(10,34) - 47 = -13  -> fim da barra em 810
+       janela 844:  bottom = max(10,34) -  0 =  34  -> fim da barra em 810
+     O mesmo lugar; some sozinho quando o iOS se corrige (medidor abaixo). */
   .bottom-nav.nav5{
-    position:static;
-    order:2; /* sempre por ultimo, mesmo com o banner de instalacao presente */
+    position:fixed;
+    left:14px; right:14px;
+    bottom:calc(max(10px, env(safe-area-inset-bottom)) - var(--erro-janela, 0px));
+    z-index:70;
     flex-shrink:0;
-    width:calc(100% - 28px);
+    width:auto;
     max-width:612px;
-    /* em app instalado para logo acima do indicador de home (env=34px);
-       no Safari, uma folga minima de 10px */
-    margin:0 auto max(10px, env(safe-area-inset-bottom));
+    margin:0 auto;
     transform:none;
     justify-content:space-between;
     gap:0;
@@ -3201,6 +3213,25 @@ applyFullI18n();
 renderDayHero();
 wireInstallBanner();
 wireBottomNav();
+
+/* ---------- mede o quanto a janela esta faltando na abertura ----------
+   screen.height e a tela FISICA, nao muda com bug nenhum. So vale em retrato.
+   40px de piso: abaixo disso e a barra de enderecos do Safari comum, nao o
+   bug da barra de status (que vale ~47). */
+(function(){
+  function medir(){
+    var retrato = window.innerHeight > window.innerWidth;
+    var erro = retrato ? Math.round(screen.height - window.innerHeight) : 0;
+    document.documentElement.style.setProperty('--erro-janela', (erro >= 40 ? erro : 0) + 'px');
+  }
+  medir();
+  function remedir(){ medir(); setTimeout(medir, 300); }
+  window.addEventListener('resize', remedir);
+  window.addEventListener('orientationchange', remedir);
+  window.addEventListener('pageshow', remedir);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) remedir(); });
+  setTimeout(medir, 600);
+})();
 
 /* ---------- barra fora de cena enquanto o teclado esta aberto ----------
    Copiado do Banca, com as duas armadilhas que ele ja pagou pra aprender:
