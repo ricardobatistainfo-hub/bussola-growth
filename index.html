@@ -2,20 +2,22 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- A ORDEM destas duas linhas e a mesma do Banca, e nao e cosmetica: o iOS
+     le apple-mobile-web-app-status-bar-style no contexto do capable que vem
+     imediatamente antes. Com outra meta no meio, o valor pode ser ignorado --
+     e uma status bar ignorada e o que faz a janela nascer com a altura errada
+     (medido: janela 797 contra tela 844). NAO intercalar nada entre elas.
+
+     O Banca usa black-translucent e reporta a janela CERTA (844) no mesmo
+     aparelho. O Bussola usava a mesma meta tag e reportava 797 -- a unica
+     diferenca estrutural no <head> era esta ordem, mais o minimum-scale
+     abaixo no viewport e o color-scheme, que o Banca nao tem. -->
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- "black" e nao "black-translucent" DE PROPOSITO. com black-translucent o
-     iOS poe o app em tela cheia por baixo da barra de status e, na abertura,
-     posiciona a janela no topo da tela mas informa a altura SEM a barra de
-     status: tudo que se ancora no rodape para ~47px antes do fim, e so
-     acerta quando uma rotacao obriga o iOS a recalcular. era a causa da
-     barra de menu nascer longe do fundo. com black a janela ja nasce
-     coerente e nao existe o que corrigir depois. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Growth">
 <meta name="theme-color" content="#161A23">
-<meta name="color-scheme" content="dark">
 <title>Growth</title>
 <!-- Manifest e icones como ARQUIVOS, nao data: URI.
      O iOS trata manifest em data: URI de forma irregular, e e o manifest que
